@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#5c94fc" />
+  <title>Pixel Platformer</title>
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Pixel Platformer" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game"></canvas>
+
+    <!-- Top-right system buttons -->
+    <button id="mute" class="sysbtn" aria-label="mute">&#128266;</button>
+
+    <!-- On-screen controls -->
+    <div id="controls">
+      <div class="pad">
+        <button class="btn dpad up" data-btn="up" aria-label="up">&#9650;</button>
+        <button class="btn dpad left" data-btn="left" aria-label="left">&#9664;</button>
+        <button class="btn dpad right" data-btn="right" aria-label="right">&#9654;</button>
+        <button class="btn dpad down" data-btn="down" aria-label="down">&#9660;</button>
+      </div>
+      <div class="actions">
+        <button class="btn run" data-btn="run" aria-label="run">B</button>
+        <button class="btn jump" data-btn="jump" aria-label="jump">A</button>
+      </div>
+    </div>
+    <button id="startbtn" class="centerbtn" data-btn="start" aria-label="start">START</button>
+  </div>
+
+  <!-- Data -->
+  <script src="js/data/tiles.js"></script>
+  <script src="js/data/save.js"></script>
+  <!-- Engine -->
+  <script src="js/engine/renderer.js"></script>
+  <script src="js/engine/text.js"></script>
+  <script src="js/engine/input.js"></script>
+  <script src="js/engine/audio.js"></script>
+  <script src="js/engine/physics.js"></script>
+  <script src="js/engine/sprites.js"></script>
+  <!-- Level data depends on tiles/sprites being defined -->
+  <script src="js/data/levels.js"></script>
+  <!-- Game -->
+  <script src="js/game/entities.js"></script>
+  <script src="js/game/player.js"></script>
+  <script src="js/game/enemies.js"></script>
+  <script src="js/game/hud.js"></script>
+  <script src="js/game/level.js"></script>
+  <script src="js/game/worldmap.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
