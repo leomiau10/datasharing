@@ -54,7 +54,8 @@
     'k': 'koopa',
     'o': 'coin',
     'm': 'mushroom_block', // a ? block that yields a mushroom
-    'F': 'flag'
+    'F': 'flag',
+    'K': 'checkpoint'
   };
 
   function isSolid(id) {

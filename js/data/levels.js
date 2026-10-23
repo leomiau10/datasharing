@@ -31,7 +31,7 @@
     const pits = [];
     const numPits = opts.pits || 0;
     for (let i = 0; i < numPits; i++) {
-      const pw = 2 + Math.floor(rnd() * 3);
+      const pw = 2 + Math.floor(rnd() * 2);
       const pc = 10 + Math.floor(rnd() * (W - 30));
       pits.push([pc, pw]);
       for (let c = pc; c < pc + pw; c++) { set(c, GROUND_R, ' '); set(c, GROUND_R + 1, ' '); }
@@ -41,14 +41,39 @@
       return false;
     }
 
+    // raised ground ledges (variety + exercises terrain edges)
+    const numLedges = opts.ledges || 0;
+    for (let i = 0; i < numLedges; i++) {
+      const len = 4 + Math.floor(rnd() * 5);
+      const lh = 1 + Math.floor(rnd() * 2);
+      const c0 = 10 + Math.floor(rnd() * (W - 40));
+      let free = true;
+      for (let c = c0 - 1; c <= c0 + len; c++) {
+        if (overPit(c) || g[GROUND_R - 1][c] !== ' ') free = false;
+      }
+      if (!free) continue;
+      for (let c = c0; c < c0 + len; c++) {
+        set(c, GROUND_R - lh, '#');
+        for (let r = GROUND_R - lh + 1; r < GROUND_R; r++) set(c, r, 'd');
+      }
+    }
+
     // player start
     set(2, GROUND_R - 1, 'S');
+
+    // mid-level checkpoint on flat ground
+    {
+      let kc = Math.floor(W / 2);
+      while (kc < W - 25 && (overPit(kc) || g[GROUND_R - 1][kc] !== ' ' || g[GROUND_R - 2][kc] !== ' ')) kc++;
+      set(kc, GROUND_R - 1, 'K');
+    }
 
     // pipes
     const numPipes = opts.pipes || 0;
     for (let i = 0; i < numPipes; i++) {
       const c = 14 + Math.floor(rnd() * (W - 40));
       if (overPit(c) || overPit(c + 1)) continue;
+      if (g[GROUND_R - 1][c] !== ' ' || g[GROUND_R - 1][c + 1] !== ' ') continue;
       const ph = 1 + Math.floor(rnd() * 2); // height in body tiles
       const topR = GROUND_R - 1 - ph;
       set(c, topR, '[');
@@ -124,23 +149,24 @@
   }
 
   const configs = [
-    { name: 'WORLD 1-1  GREEN HILLS', bg: '#5c94fc', width: 110,
-      pits: 2, pipes: 2, blockRows: 2, platforms: 1, coins: 4, enemies: 4, koopas: false },
-    { name: 'WORLD 1-2  COIN CAVERN', bg: '#3a3a6a', width: 120,
-      pits: 3, pipes: 2, blockRows: 3, platforms: 2, coins: 6, enemies: 5, koopas: true },
-    { name: 'WORLD 1-3  SKY PLATFORMS', bg: '#7fb0ff', width: 130,
-      pits: 4, pipes: 1, blockRows: 2, platforms: 4, coins: 6, enemies: 6, koopas: true },
-    { name: 'WORLD 2-1  KOOPA FIELDS', bg: '#5c94fc', width: 140,
-      pits: 4, pipes: 3, blockRows: 3, platforms: 2, coins: 7, enemies: 8, koopas: true },
-    { name: 'WORLD 2-2  PIPE MAZE', bg: '#2f7a4a', width: 150,
-      pits: 5, pipes: 5, blockRows: 3, platforms: 3, coins: 7, enemies: 8, koopas: true },
-    { name: 'WORLD 2-3  CASTLE RUN', bg: '#402030', width: 160,
-      pits: 6, pipes: 3, blockRows: 4, platforms: 4, coins: 8, enemies: 10, koopas: true }
+    { name: 'WORLD 1-1  GREEN HILLS', theme: 'overworld', width: 110,
+      pits: 2, pipes: 2, ledges: 2, blockRows: 2, platforms: 1, coins: 4, enemies: 4, koopas: false },
+    { name: 'WORLD 1-2  CRYSTAL CAVERN', theme: 'cave', width: 120,
+      pits: 3, pipes: 2, ledges: 3, blockRows: 3, platforms: 2, coins: 6, enemies: 5, koopas: true },
+    { name: 'WORLD 1-3  CLOUD TOPS', theme: 'sky', width: 130,
+      pits: 4, pipes: 1, ledges: 2, blockRows: 2, platforms: 4, coins: 6, enemies: 6, koopas: true },
+    { name: 'WORLD 2-1  SUNSET FIELDS', theme: 'dusk', width: 140,
+      pits: 4, pipes: 3, ledges: 3, blockRows: 3, platforms: 2, coins: 7, enemies: 8, koopas: true },
+    { name: 'WORLD 2-2  DEEP CAVES', theme: 'cave', width: 150,
+      pits: 5, pipes: 5, ledges: 4, blockRows: 3, platforms: 3, coins: 7, enemies: 8, koopas: true },
+    { name: 'WORLD 2-3  FORTRESS RUN', theme: 'castle', width: 160,
+      pits: 6, pipes: 3, ledges: 4, blockRows: 4, platforms: 4, coins: 8, enemies: 10, koopas: true }
   ];
 
   const levels = configs.map((cfg, i) => ({
     name: cfg.name,
-    bg: cfg.bg,
+    theme: cfg.theme,
+    groundRow: GROUND_R,
     map: buildLevel(1000 + i * 777, cfg)
   }));
 

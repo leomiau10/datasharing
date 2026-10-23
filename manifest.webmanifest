@@ -1,7 +1,7 @@
 {
-  "name": "Pixel Platformer",
-  "short_name": "Platformer",
-  "description": "An original Super Mario style pixel-art platformer.",
+  "name": "Pip Quest",
+  "short_name": "Pip Quest",
+  "description": "An original 16-bit pixel-art platformer.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

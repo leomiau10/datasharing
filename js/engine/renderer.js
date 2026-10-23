@@ -1,67 +1,63 @@
-// Canvas renderer with integer scaling and a simple camera.
+// Canvas renderer: fixed height, width adapts to the screen aspect ratio (no black bars on phones).
 (function (G) {
   'use strict';
 
-  // Base internal resolution (world pixels visible). 16:9-ish, good for phone landscape.
-  const BASE_W = 384;
   const BASE_H = 216;
+  const MIN_W = 288;
+  const MAX_W = 480;
 
   let canvas, ctx;
-  let scale = 1;
   const cam = { x: 0, y: 0 };
+
+  const R = {
+    BASE_W: 384, BASE_H: BASE_H, cam: cam,
+    init: init, resize: resize, setCamera: setCamera, clear: clear,
+    rect: rect, rectS: rectS, sprite: sprite, spriteS: spriteS, spriteScaled: spriteScaled, getCtx: getCtx
+  };
 
   function init(canvasEl) {
     canvas = canvasEl;
     ctx = canvas.getContext('2d');
-    canvas.width = BASE_W;
-    canvas.height = BASE_H;
-    ctx.imageSmoothingEnabled = false;
     resize();
     window.addEventListener('resize', resize);
-    window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+    window.addEventListener('orientationchange', function () { setTimeout(resize, 200); });
   }
 
   function resize() {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    // Fit while preserving aspect ratio; allow fractional CSS scale (pixelated keeps it crisp).
-    scale = Math.min(vw / BASE_W, vh / BASE_H);
-    const cssW = Math.round(BASE_W * scale);
-    const cssH = Math.round(BASE_H * scale);
-    canvas.style.width = cssW + 'px';
-    canvas.style.height = cssH + 'px';
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let w = Math.round(BASE_H * (vw / vh));
+    w = Math.max(MIN_W, Math.min(MAX_W, w));
+    if (w % 2) w++;
+    R.BASE_W = w;
+    if (canvas.width !== w || canvas.height !== BASE_H) {
+      canvas.width = w;
+      canvas.height = BASE_H;
+      ctx.imageSmoothingEnabled = false;
+    }
+    const scale = Math.min(vw / w, vh / BASE_H);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = (Math.round(w * scale * dpr) / dpr) + 'px';
+    canvas.style.height = (Math.round(BASE_H * scale * dpr) / dpr) + 'px';
   }
 
-  function setCamera(x, y) {
-    cam.x = Math.round(x);
-    cam.y = Math.round(y);
-  }
+  function setCamera(x, y) { cam.x = Math.round(x); cam.y = Math.round(y); }
 
   function clear(color) {
     ctx.fillStyle = color || '#5c94fc';
-    ctx.fillRect(0, 0, BASE_W, BASE_H);
+    ctx.fillRect(0, 0, R.BASE_W, BASE_H);
   }
 
-  // World-space rectangle.
   function rect(x, y, w, h, color) {
     ctx.fillStyle = color;
     ctx.fillRect(Math.round(x - cam.x), Math.round(y - cam.y), w, h);
   }
+  function rectS(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(x, y, w, h); }
 
-  // Screen-space rectangle (UI).
-  function rectS(x, y, w, h, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, w, h);
-  }
-
-  // Draw a baked sprite canvas at world coords, optional horizontal flip.
-  function sprite(img, x, y, flip) {
-    const sx = Math.round(x - cam.x);
-    const sy = Math.round(y - cam.y);
-    if (flip) {
+  function blit(img, sx, sy, flipX, flipY) {
+    if (flipX || flipY) {
       ctx.save();
-      ctx.translate(sx + img.width, sy);
-      ctx.scale(-1, 1);
+      ctx.translate(sx + (flipX ? img.width : 0), sy + (flipY ? img.height : 0));
+      ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
       ctx.drawImage(img, 0, 0);
       ctx.restore();
     } else {
@@ -69,23 +65,10 @@
     }
   }
 
-  // Screen-space sprite (UI/HUD).
-  function spriteS(img, x, y, flip) {
-    if (flip) {
-      ctx.save();
-      ctx.translate(x + img.width, y);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0);
-      ctx.restore();
-    } else {
-      ctx.drawImage(img, x, y);
-    }
-  }
-
+  function sprite(img, x, y, flipX, flipY) { blit(img, Math.round(x - cam.x), Math.round(y - cam.y), flipX, flipY); }
+  function spriteS(img, x, y, flipX, flipY) { blit(img, Math.round(x), Math.round(y), flipX, flipY); }
+  function spriteScaled(img, x, y, w, h) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y), w, h); }
   function getCtx() { return ctx; }
 
-  G.R = {
-    BASE_W, BASE_H, init, resize, setCamera, clear,
-    rect, rectS, sprite, spriteS, getCtx, cam
-  };
+  G.R = R;
 })(window.GAME = window.GAME || {});

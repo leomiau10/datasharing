@@ -84,5 +84,50 @@
     });
   }
 
-  G.Input = { state, down, justPressed, snapshot, bindTouch, keyDown: setDown, keyUp: setUp };
+  // ----- Sliding d-pad: one touch zone; direction follows the finger as it drags -----
+  function bindDpad(zone) {
+    const DEAD = 0.22;
+    let activeId = null;
+
+    function apply(e) {
+      const r = zone.getBoundingClientRect();
+      const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+      const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
+      const want = {
+        left: nx < -DEAD,
+        right: nx > DEAD,
+        up: ny < -DEAD * 1.4,
+        down: ny > DEAD * 1.4
+      };
+      for (const k in want) {
+        if (want[k]) setDown(k); else setUp(k);
+        const el = zone.querySelector('[data-dir="' + k + '"]');
+        if (el) el.classList.toggle('held', want[k]);
+      }
+    }
+    function end() {
+      activeId = null;
+      ['left', 'right', 'up', 'down'].forEach(function (k) {
+        setUp(k);
+        const el = zone.querySelector('[data-dir="' + k + '"]');
+        if (el) el.classList.remove('held');
+      });
+    }
+
+    zone.addEventListener('pointerdown', function (e) {
+      activeId = e.pointerId;
+      try { zone.setPointerCapture(e.pointerId); } catch (err) {}
+      apply(e);
+      G.Audio && G.Audio.resume();
+      if (e.cancelable) e.preventDefault();
+    });
+    zone.addEventListener('pointermove', function (e) {
+      if (e.pointerId === activeId) { apply(e); if (e.cancelable) e.preventDefault(); }
+    });
+    zone.addEventListener('pointerup', function (e) { if (e.pointerId === activeId) end(); });
+    zone.addEventListener('pointercancel', function (e) { if (e.pointerId === activeId) end(); });
+    zone.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+
+  G.Input = { state, down, justPressed, snapshot, bindTouch, bindDpad, keyDown: setDown, keyUp: setUp };
 })(window.GAME = window.GAME || {});

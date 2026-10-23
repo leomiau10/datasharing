@@ -20,7 +20,7 @@
     const result = { left: false, right: false, up: false, down: false, hit: [] };
 
     if (gravity !== false) {
-      e.vy += GRAVITY;
+      e.vy += (e.grav != null ? e.grav : GRAVITY);
       if (e.vy > MAX_FALL) e.vy = MAX_FALL;
     }
 
