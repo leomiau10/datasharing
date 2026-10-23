@@ -8,6 +8,24 @@
     return n;
   }
 
+  // Word-wrapped message box (signs).
+  function drawTip(text) {
+    const T = G.Text, R = G.R;
+    const maxChars = Math.floor((R.BASE_W - 48) / 6);
+    const lines = [];
+    let line = '';
+    for (const w of text.split(' ')) {
+      if ((line + ' ' + w).trim().length > maxChars) { lines.push(line.trim()); line = w; }
+      else line += ' ' + w;
+    }
+    if (line.trim()) lines.push(line.trim());
+    const bh = lines.length * 10 + 12, by = 26, bx = 16, bw = R.BASE_W - 32;
+    R.rectS(bx - 2, by - 2, bw + 4, bh + 4, '#1c1024');
+    R.rectS(bx, by, bw, bh, '#2a3a8a');
+    R.rectS(bx, by, bw, 2, '#5a7ad8');
+    lines.forEach((l, i) => T.drawCenterShadow(l, by + 7 + i * 10, '#fff', 1, '#000'));
+  }
+
   function render(game, level) {
     const T = G.Text, R = G.R, S = G.Sprites;
     const y = 5;
@@ -24,10 +42,20 @@
 
     // power-up badge
     const form = level.player.form;
-    if (form !== 'small') T.drawShadow(form === 'fire' ? 'FIRE' : 'BIG', 166, y, form === 'fire' ? '#ff9a3a' : '#7ae0d4', 1, '#000');
+    const badge = { big: ['BIG', '#7ae0d4'], fire: ['FIRE', '#ff9a3a'], cloud: ['CLOUD', '#a8d8ff'] }[form];
+    if (badge) T.drawShadow(badge[0], 166, y, badge[1], 1, '#000');
+
+    // medals: 3 slots (solid = got now or before)
+    const ctx = R.getCtx();
+    for (let i = 0; i < 3; i++) {
+      const got = (level.medalsGot | level.medalsHad) & (1 << i);
+      ctx.drawImage(got ? S.medal : S.medalFaded, 200 + i * 10, 3, 8, 11);
+    }
+    if (level.player.star > 0) T.drawShadow('STAR', 234, y, ['#ff4a6a', '#ffd84a', '#4ae08a', '#4ab0ff'][(game.animFrame >> 2) & 3], 1, '#000');
 
     T.drawShadow('TIME ' + pad(level.time, 3), R.BASE_W - 84, y, level.time <= 60 ? '#ff7a6a' : '#fff', 1, '#000');
-    if (level.age < 3 && !level.cleared) T.drawCenterShadow(level.def.name || '', 30, '#fff', 1, '#000');
+    if (level.tip) drawTip(level.tip);
+    if (level.age < 3 && !level.cleared && !level.tip) T.drawCenterShadow(level.def.name || '', 30, '#fff', 1, '#000');
   }
 
   G.HUD = { render: render };

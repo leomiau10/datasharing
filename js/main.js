@@ -67,6 +67,7 @@
       const f = this.focusPoint();
       this.go(() => {
         G.Save.markCleared(this.levelIndex);
+        G.Save.addMedals(this.levelIndex, this.level.medalsGot);
         delete this.checkpoints[this.levelIndex];
         this.form = this.level.player.form;
         const allDone = G.Levels.every((_, i) => G.Save.isCleared(i));
@@ -182,12 +183,18 @@
       R.spriteS(S.bush, 250, gy - S.bush.height + 1);
       R.spriteS(S.heroSets.big.idle, 56, gy - S.heroSets.big.idle.height + 1);
       R.spriteS(S.blob[(this.animFrame >> 4) & 1], R.BASE_W - 150, gy - 17);
-      R.spriteS(S.tQuestion[(this.animFrame >> 3) & 3], R.BASE_W - 110, gy - 56);
+      R.spriteS(S.tQuestion[(this.animFrame >> 3) & 3], R.BASE_W - 110, gy - 36);
 
-      T.drawCenterShadow('PIP QUEST', 34, '#ffffff', 5, '#177a74');
-      T.drawCenterShadow('A 16-BIT ADVENTURE', 82, '#fff6c0', 1, '#000');
-      if ((this.animFrame >> 5) & 1) T.drawCenterShadow('PRESS A  OR  TAP TO START', 112, '#fff', 1, '#000');
-      T.drawCenterShadow('ARROWS MOVE  Z JUMP  X RUN', 128, '#dde', 1, '#000');
+      T.drawCenterShadow('PIP QUEST', 26, '#ffffff', 5, '#177a74');
+      T.drawCenterShadow('A 16-BIT ADVENTURE', 70, '#fff6c0', 1, '#000');
+      if ((this.animFrame >> 5) & 1) T.drawCenterShadow('PULSA A PARA EMPEZAR', 88, '#fff', 1, '#000');
+      const help = [
+        'A SALTAR    B CORRER / FUEGO / AGARRAR    Y GIRO',
+        'ABAJO EN EL AIRE: GOLPE AL SUELO',
+        'CONTRA LA PARED + A: SALTO DE PARED'
+      ];
+      R.rectS(20, 104, R.BASE_W - 40, 40, 'rgba(0,0,0,0.35)');
+      help.forEach((l, i) => T.drawCenterShadow(l, 109 + i * 11, '#dde', 1, '#000'));
     }
 
     renderGameOver() {

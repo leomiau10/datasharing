@@ -69,6 +69,11 @@
     die() { [523, 392, 330, 262].forEach(function (f, i) { later(function () { note(f, 0.2, 'square', 0.28); }, i * 160); }); },
     flag() { [262, 330, 392, 523, 659, 784].forEach(function (f, i) { later(function () { note(f, 0.14, 'square', 0.24); }, i * 110); }); },
     select() { note(660, 0.06, 'square', 0.18); },
+    spin() { slide(300, 1200, 0.12, 'triangle', 0.2); later(function () { slide(500, 1400, 0.1, 'triangle', 0.14); }, 90); },
+    pound() { slide(180, 50, 0.22, 'square', 0.34); },
+    medal() { [784, 988, 1175, 1568].forEach(function (f, i) { later(function () { note(f, 0.12, 'triangle', 0.26); }, i * 60); }); },
+    oneup() { [659, 784, 1319, 1047, 1175, 1568].forEach(function (f, i) { later(function () { note(f, 0.1, 'square', 0.2); }, i * 80); }); },
+    bossHit() { slide(600, 150, 0.3, 'sawtooth', 0.3); },
     start() { [523, 659, 784, 1047].forEach(function (f, i) { later(function () { note(f, 0.12, 'square', 0.22); }, i * 90); }); }
   };
 
@@ -86,7 +91,9 @@
     sky: { tempo: 0.11, root: 64, scale: MAJOR, prog: [0, 3, 4, 0], lead: 'square', seed: 8 },
     dusk: { tempo: 0.14, root: 62, scale: MAJOR, prog: [5, 3, 0, 4], lead: 'square', seed: 12 },
     castle: { tempo: 0.13, root: 55, scale: MINOR, prog: [0, 0, 5, 4], lead: 'sawtooth', seed: 17 },
-    map: { tempo: 0.16, root: 65, scale: MAJOR, prog: [0, 3, 0, 4], lead: 'triangle', seed: 21 }
+    map: { tempo: 0.16, root: 65, scale: MAJOR, prog: [0, 3, 0, 4], lead: 'triangle', seed: 21 },
+    star: { tempo: 0.085, root: 67, scale: MAJOR, prog: [0, 4, 0, 4], lead: 'square', seed: 29 },
+    boss: { tempo: 0.11, root: 50, scale: MINOR, prog: [0, 1, 0, 6], lead: 'sawtooth', seed: 31 }
   };
 
   function degreeNote(th, degree, octave) {

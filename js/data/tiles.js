@@ -55,7 +55,18 @@
     'o': 'coin',
     'm': 'mushroom_block', // a ? block that yields a mushroom
     'F': 'flag',
-    'K': 'checkpoint'
+    'K': 'checkpoint',
+    'p': 'spiky',
+    'b': 'bee',
+    'h': 'hopper',
+    'Z': 'boss',
+    '*': 'medal',
+    'u': 'oneup_block',
+    'c': 'cloud_block',
+    'r': 'gem_block',
+    'M': 'plat_h',
+    'V': 'plat_v',
+    '!': 'sign'
   };
 
   function isSolid(id) {

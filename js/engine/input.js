@@ -4,7 +4,7 @@
 
   const state = {
     left: false, right: false, up: false, down: false,
-    jump: false, run: false, start: false
+    jump: false, run: false, spin: false, start: false
   };
   // Event-level latch: set when a key/button transitions to down. This survives
   // until the next snapshot consumes it, so sub-frame taps are never missed and
@@ -36,6 +36,7 @@
     ArrowDown: 'down', KeyS: 'down',
     Space: 'jump', KeyJ: 'jump', KeyZ: 'jump',
     ShiftLeft: 'run', ShiftRight: 'run', KeyK: 'run', KeyX: 'run',
+    KeyC: 'spin', KeyL: 'spin',
     Enter: 'start'
   };
 

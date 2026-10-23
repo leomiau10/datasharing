@@ -130,10 +130,15 @@
       }
     };
   }
+  const heroPalWind = {
+    t: '#ffffff', T: '#a8c8f0', y: '#5ab0ff', Y: '#2a70c0', s: '#ffd0a4', S: '#e29a6c',
+    k: '#2a1a3a', o: '#7ac8ff', O: '#2a78c8', b: '#6e3c1e'
+  };
   const heroN = buildHero(heroPalNormal);
   const heroF = buildHero(heroPalFire);
-  const heroSets = { small: heroN.small, big: heroN.big, fire: heroF.big };
-  const heroCrouch = { big: heroN.small.idle, fire: heroF.small.idle };
+  const heroW = buildHero(heroPalWind);
+  const heroSets = { small: heroN.small, big: heroN.big, fire: heroF.big, cloud: heroW.big };
+  const heroCrouch = { big: heroN.small.idle, fire: heroF.small.idle, cloud: heroW.small.idle };
   const lifeIcon = bake(H_IDLE.slice(0, 10), heroPalNormal, OL);
 
   // ---------------------------------------------------------------- enemies
@@ -510,6 +515,242 @@
     return c;
   })();
 
+
+  // ---------------------------------------------------------------- extra cast (all original designs)
+  function ellipse(x, cx, cy, rx, ry, color) {
+    x.fillStyle = color;
+    for (let dy = -ry; dy <= ry; dy++) {
+      const dx = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy / ry) * (dy / ry))));
+      x.fillRect(cx - dx, cy + dy, dx * 2 + 1, 1);
+    }
+  }
+
+  // Tinted copy (used for the invincibility flash); cached per image+color.
+  const tintCache = new Map();
+  let tintId = 0;
+  function tint(img, color) {
+    if (!img._tid) img._tid = ++tintId;
+    const key = img._tid + color;
+    let c = tintCache.get(key);
+    if (!c) {
+      c = mk(img.width, img.height);
+      const x = c.getContext('2d');
+      x.drawImage(img, 0, 0);
+      x.globalCompositeOperation = 'source-atop';
+      x.globalAlpha = 0.55;
+      x.fillStyle = color;
+      x.fillRect(0, 0, img.width, img.height);
+      tintCache.set(key, c);
+    }
+    return c;
+  }
+
+  // Thornback: spiky hedgehog-like walker (can't be stomped normally)
+  function makeSpiky(frame) {
+    const c = mk(16, 15), x = c.getContext('2d');
+    const top = [];
+    for (let i = 1; i <= 14; i++) {
+      const t = (i - 7.5) / 7;
+      const hh = Math.round(8 * Math.sqrt(Math.max(0, 1 - t * t)));
+      top[i] = 13 - hh;
+      x.fillStyle = '#2fa38a'; x.fillRect(i, 13 - hh, 1, hh + 1);
+      x.fillStyle = '#7ee0c8'; x.fillRect(i, 13 - hh, 1, 1);
+    }
+    [3, 7, 11].forEach(function (cx) {
+      const base = top[cx] + 1;
+      for (let k = 0; k < 5; k++) {
+        const hw = Math.max(0, 2 - Math.floor(k / 2));
+        x.fillStyle = k === 4 ? '#ffffff' : '#ffd84a';
+        x.fillRect(cx - hw, base - k, hw * 2 + 1, 1);
+      }
+    });
+    x.fillStyle = '#ffffff'; x.fillRect(11, 8, 2, 3);
+    x.fillStyle = '#1a1030'; x.fillRect(12, 9, 1, 2);
+    x.fillStyle = '#f0a070'; x.fillRect(14, 10, 2, 2);
+    x.fillStyle = '#1a3a30';
+    const fx = frame ? 1 : 0;
+    x.fillRect(3 + fx, 13, 3, 2); x.fillRect(10 - fx, 13, 3, 2);
+    return outline(c, OL);
+  }
+
+  function makeBee(frame) {
+    const c = mk(16, 14), x = c.getContext('2d');
+    const wy = frame ? 4 : 2;
+    ellipse(x, 8, 8, 6, 5, '#ffd84a');
+    // stripes clipped to the body ellipse
+    x.fillStyle = '#2a1a1a';
+    [5, 6, 9].forEach(function (sx) {
+      const t = (sx - 8) / 6;
+      const dy = Math.round(5 * Math.sqrt(Math.max(0, 1 - t * t)));
+      x.fillRect(sx, 8 - dy, 1, dy * 2 + 1);
+    });
+    ellipse(x, 6, wy, 2, 2, '#e0f4ff'); ellipse(x, 10, wy, 2, 2, '#e0f4ff');
+    x.fillStyle = '#ffffff'; x.fillRect(11, 6, 2, 2);
+    x.fillStyle = '#1a1a1a'; x.fillRect(12, 7, 1, 1);
+    x.fillRect(0, 8, 2, 1); x.fillRect(1, 9, 1, 1);
+    return outline(c, OL);
+  }
+
+  function makeHopper(jump) {
+    const c = mk(16, 16), x = c.getContext('2d');
+    if (jump) {
+      x.fillStyle = '#2e8a2a'; x.fillRect(3, 12, 2, 4); x.fillRect(11, 12, 2, 4);
+      ellipse(x, 8, 8, 5, 5, '#5ac840');
+      ellipse(x, 8, 10, 3, 2, '#c8f0a0');
+    } else {
+      x.fillStyle = '#2e8a2a'; x.fillRect(1, 13, 4, 3); x.fillRect(11, 13, 4, 3);
+      ellipse(x, 8, 11, 6, 4, '#5ac840');
+      ellipse(x, 8, 12, 4, 2, '#c8f0a0');
+    }
+    const ey = jump ? 3 : 6;
+    G_disc(x, 5, ey, 2, '#ffffff'); G_disc(x, 11, ey, 2, '#ffffff');
+    x.fillStyle = '#1a1a1a'; x.fillRect(6, ey, 1, 1); x.fillRect(12, ey, 1, 1);
+    return outline(c, OL);
+  }
+  function G_disc(x, cx, cy, r, col) { disc(x, cx, cy, r, col); }
+
+  // King Gloop: big crowned blob, the fortress boss
+  function makeBoss(squash) {
+    const c = mk(34, 32), x = c.getContext('2d');
+    const ry = squash ? 9 : 11, cy = squash ? 22 : 20;
+    ellipse(x, 17, cy, 15, ry, '#8a4fd0');
+    ellipse(x, 17, cy + 4, 11, Math.max(3, ry - 6), '#c9a0f0');
+    ellipse(x, 11, cy - 5, 2, 3, '#ffffff'); ellipse(x, 23, cy - 5, 2, 3, '#ffffff');
+    x.fillStyle = '#1a1030'; x.fillRect(12, cy - 5, 2, 3); x.fillRect(22, cy - 5, 2, 3);
+    x.fillRect(8, cy - 10, 5, 1); x.fillRect(12, cy - 9, 2, 1);
+    x.fillRect(21, cy - 10, 5, 1); x.fillRect(20, cy - 9, 2, 1);
+    x.fillStyle = '#3a1050'; x.fillRect(12, cy + 1, 11, 3);
+    x.fillStyle = '#ffffff'; x.fillRect(13, cy + 1, 2, 2); x.fillRect(20, cy + 1, 2, 2);
+    const ct = cy - ry - 5;
+    x.fillStyle = '#ffd84a'; x.fillRect(9, ct + 4, 17, 5);
+    [9, 17, 25].forEach(function (px) { for (let k = 0; k < 4; k++) x.fillRect(px - (3 - k) / 2 | 0, ct + 3 - k, 3 - k > 0 ? 3 - k : 1, 1); });
+    x.fillStyle = '#fff6c0'; x.fillRect(9, ct + 4, 17, 1);
+    x.fillStyle = '#e8304a'; x.fillRect(16, ct + 5, 3, 3);
+    x.fillStyle = '#5e2fa0'; x.fillRect(6, 30, 7, 2); x.fillRect(21, 30, 7, 2);
+    return outline(c, OL);
+  }
+
+  function makeHeart() {
+    const c = mk(14, 12), x = c.getContext('2d');
+    disc(x, 4, 4, 3, '#e8304a'); disc(x, 9, 4, 3, '#e8304a');
+    for (let j = 0; j < 6; j++) { x.fillRect(1 + j, 5 + j, 12 - j * 2, 1); }
+    x.fillStyle = '#ff9aac'; x.fillRect(3, 2, 2, 2);
+    return outline(c, OL);
+  }
+
+  function makeCloudItem() {
+    const c = mk(16, 12), x = c.getContext('2d');
+    disc(x, 5, 7, 4, '#ffffff'); disc(x, 10, 5, 5, '#ffffff'); disc(x, 13, 8, 3, '#ffffff');
+    x.fillStyle = '#ffffff'; x.fillRect(4, 8, 10, 3);
+    x.fillStyle = '#cfe4ff'; x.fillRect(3, 10, 11, 1);
+    x.fillStyle = '#5ab0ff'; x.fillRect(8, 3, 2, 1); x.fillRect(7, 4, 1, 1);
+    return outline(c, '#3a5aa0');
+  }
+
+  function makeGem(col) {
+    const c = mk(12, 14), x = c.getContext('2d');
+    for (let j = 0; j < 14; j++) {
+      const hw = j < 5 ? j + 1 : Math.max(0, 13 - j) * 6 / 9 | 0;
+      x.fillStyle = col; x.fillRect(6 - hw, j, hw * 2, 1);
+    }
+    x.fillStyle = '#ffffff'; x.fillRect(4, 3, 2, 2); x.fillRect(3, 5, 1, 2);
+    x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(6, 6, 4, 4);
+    return outline(c, OL);
+  }
+
+  function makeMedal() {
+    const c = mk(12, 16), x = c.getContext('2d');
+    ellipse(x, 6, 8, 5, 7, '#f7d51d');
+    ellipse(x, 6, 8, 3, 5, '#c79a10');
+    ellipse(x, 6, 8, 2, 4, '#ffe866');
+    x.fillStyle = '#ffffff'; x.fillRect(5, 5, 2, 6); x.fillRect(3, 7, 6, 2);
+    x.fillStyle = '#fff6c0'; x.fillRect(2, 3, 1, 3);
+    return outline(c, OL);
+  }
+  function faded(img, a) {
+    const c = mk(img.width, img.height), x = c.getContext('2d');
+    x.globalAlpha = a; x.drawImage(img, 0, 0);
+    return c;
+  }
+
+  function makeLift() {
+    const c = mk(48, 8), x = c.getContext('2d');
+    x.fillStyle = '#a8a8b8'; x.fillRect(0, 0, 48, 8);
+    x.fillStyle = '#e0e0ec'; x.fillRect(0, 0, 48, 2);
+    x.fillStyle = '#606070'; x.fillRect(0, 6, 48, 2);
+    x.fillStyle = '#383848'; [4, 20, 27, 43].forEach(function (px) { x.fillRect(px, 3, 2, 2); });
+    x.fillStyle = '#ffd84a'; x.fillRect(12, 3, 4, 2); x.fillRect(32, 3, 4, 2);
+    return outline(c, OL);
+  }
+
+  function makeSign() {
+    const c = mk(16, 16), x = c.getContext('2d');
+    x.fillStyle = '#7a4a20'; x.fillRect(7, 9, 2, 7);
+    x.fillStyle = '#7a4a20'; x.fillRect(1, 1, 14, 9);
+    x.fillStyle = '#d89a50'; x.fillRect(2, 2, 12, 7);
+    x.fillStyle = '#f0c080'; x.fillRect(2, 2, 12, 1);
+    x.fillStyle = '#ffffff'; x.fillRect(7, 3, 2, 3); x.fillRect(7, 7, 2, 1);
+    return outline(c, OL);
+  }
+
+  function makeFlowerDecor(col) {
+    const c = mk(9, 10), x = c.getContext('2d');
+    x.fillStyle = '#2e8a2a'; x.fillRect(4, 4, 1, 6); x.fillRect(2, 7, 2, 1);
+    disc(x, 4, 3, 2, col);
+    x.fillStyle = '#ffe866'; x.fillRect(4, 3, 1, 1);
+    return outline(c, '#1a3a1a');
+  }
+
+  function makeTree() {
+    const c = mk(28, 44), x = c.getContext('2d');
+    x.fillStyle = '#7a4a20'; x.fillRect(12, 26, 5, 18);
+    x.fillStyle = '#a06a3a'; x.fillRect(12, 26, 2, 18);
+    disc(x, 14, 15, 13, '#1f7a30');
+    disc(x, 13, 13, 11, '#3cb34a');
+    disc(x, 10, 9, 4, '#7ee07a');
+    disc(x, 20, 18, 2, '#e8304a'); disc(x, 8, 20, 2, '#e8304a');
+    return outline(c, '#124a1c');
+  }
+
+  function makeCrystal() {
+    const c = mk(12, 14), x = c.getContext('2d');
+    [[3, 6, 3], [7, 2, 3], [10, 7, 2]].forEach(function (p) {
+      const cx = p[0], top = p[1], hw = p[2];
+      for (let j = top; j < 14; j++) {
+        const w = Math.min(hw, 1 + ((j - top) >> 1));
+        x.fillStyle = '#5ae8ff'; x.fillRect(cx - w, j, w * 2, 1);
+        x.fillStyle = '#d0faff'; x.fillRect(cx - w, j, 1, 1);
+      }
+    });
+    return outline(c, '#12325a');
+  }
+
+  function makeMapCastle() {
+    const c = mk(16, 16), x = c.getContext('2d');
+    x.fillStyle = '#8c8ca4'; x.fillRect(2, 5, 12, 11);
+    for (let i = 0; i < 4; i++) x.fillRect(2 + i * 4, 2, 2, 3);
+    x.fillStyle = '#b4b4cc'; x.fillRect(2, 5, 12, 1);
+    x.fillStyle = '#1a1030'; x.fillRect(6, 10, 4, 6);
+    x.fillStyle = '#e8304a'; x.fillRect(7, 0, 4, 2); x.fillStyle = '#ffd84a'; x.fillRect(6, 0, 1, 5);
+    return outline(c, OL);
+  }
+
+  const spiky = [makeSpiky(0), makeSpiky(1)];
+  const bee = [makeBee(0), makeBee(1)];
+  const hopper = [makeHopper(false), makeHopper(true)];
+  const boss = [makeBoss(false), makeBoss(true)];
+  const heart = makeHeart();
+  const cloudItem = makeCloudItem();
+  const gem = ['#ff4a6a', '#ffd84a', '#4ae08a', '#4ab0ff'].map(makeGem);
+  const medal = makeMedal();
+  const medalFaded = faded(medal, 0.35);
+  const lift = makeLift();
+  const sign = makeSign();
+  const flowerDecor = ['#ff6a8a', '#ffffff', '#ffd84a'].map(makeFlowerDecor);
+  const tree = makeTree();
+  const crystal = makeCrystal();
+  const mapCastle = makeMapCastle();
+
   const S = {
     heroSets: heroSets, heroCrouch: heroCrouch, lifeIcon: lifeIcon,
     blob: blob, snail: snail, shell: shell,
@@ -519,12 +760,15 @@
     tPipeTL: pipes.TL, tPipeTR: pipes.TR, tPipeL: pipes.L, tPipeR: pipes.R,
     tFlagPole: poleTile, tFlagTop: poleTop, banner: banner, castle: castle,
     mapNode: mapNode, mapNodeDone: mapNodeDone, mapNodeLock: mapNodeLock,
-    cloud: cloud, bush: bush, hill: hill
+    cloud: cloud, bush: bush, hill: hill,
+    spiky: spiky, bee: bee, hopper: hopper, boss: boss, heart: heart, cloudItem: cloudItem, gem: gem,
+    medal: medal, medalFaded: medalFaded, lift: lift, sign: sign, flowerDecor: flowerDecor, tree: tree,
+    crystal: crystal, mapCastle: mapCastle
   };
   // Convenience aliases for the title/map screens.
   S.tGround = tilesets.overworld.groundM;
   S.tDirt = tilesets.overworld.dirtM;
 
   G.Sprites = S;
-  G.Gfx = { mk: mk, rng: rng, disc: disc, outline: outline, bake: bake };
+  G.Gfx = { mk: mk, rng: rng, disc: disc, outline: outline, bake: bake, tint: tint };
 })(window.GAME = window.GAME || {});

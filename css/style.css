@@ -99,6 +99,13 @@ html, body {
   border-color: rgba(255, 180, 180, 0.6);
   font-size: 32px;
 }
+.btn.spin {
+  width: 62px; height: 62px;
+  right: 12px; bottom: 96px;
+  background: rgba(40, 180, 90, 0.35);
+  border-color: rgba(180, 255, 200, 0.6);
+  font-size: 26px;
+}
 .btn.run {
   width: 70px; height: 70px;
   right: 90px; bottom: 30px;

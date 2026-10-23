@@ -1,190 +1,273 @@
-// Level data + world map. Levels are built procedurally (deterministic per seed)
-// so the maps are large and varied without hand-typing huge strings.
+// Hand-designed levels built from reusable chunks (original layouts).
+//
+// Each chunk is { floor, art }: `floor` sets the width; '#' ground, '.' pit, '^' pit with spikes.
+// `art` rows are bottom-aligned so the last row is the row the hero stands in (row 11).
+// Art chars: see js/data/tiles.js (# ground, B brick, ? coin block, m power block, u 1UP block,
+// c cloud block, r gem block, X hard block, - one-way ledge, [ ] { } pipe, ^ spikes,
+// g Blob, k Snail, p Thornback, b Bee, h Hopper, Z boss, o coin, * medal, ! sign, K checkpoint,
+// M/V moving lift, S start, F goal).
 (function (G) {
   'use strict';
 
-  const H = 14;          // rows tall
-  const GROUND_R = 12;   // top ground row (row 13 is dirt)
+  const H = 14;
+  const GROUND_R = 12;
 
-  function rngFactory(seed) {
-    let s = seed >>> 0;
-    return function () {
-      s = (s * 1664525 + 1013904223) >>> 0;
-      return s / 4294967296;
-    };
+  const CHUNKS = {
+    start: { floor: '##############', art: [
+      '      m       ',
+      '              ',
+      '              ',
+      '  S  !        '] },
+    start_plain: { floor: '##############', art: [
+      '      m       ',
+      '              ',
+      '              ',
+      '  S           '] },
+    tip: { floor: '########', art: ['   !    '] },
+    flat_coins: { floor: '############', art: [
+      '   oooo     ',
+      '            ',
+      '            ',
+      '            ',
+      '      g     '] },
+    blocks_row: { floor: '################', art: [
+      '     o o o      ',
+      '                ',
+      '                ',
+      '                ',
+      '   B?BmB        ',
+      '                ',
+      '                ',
+      '           g    '] },
+    pit_small: { floor: '####...####', art: [
+      '    ooo    ',
+      '   o   o   ',
+      '           ',
+      '           '] },
+    pit_big: { floor: '###......###', art: [
+      '    oooo    ',
+      '   o    o   ',
+      '            ',
+      '            '] },
+    pipes: { floor: '################', art: [
+      '         []     ',
+      '   []    {}     ',
+      '   {} g  {}     '] },
+    pyramid: { floor: '##############', art: [
+      '      oo      ',
+      '      XX      ',
+      '     XXXX     ',
+      '    XXXXXX    ',
+      '   XXXXXXXX   '] },
+    hills: { floor: '##################', art: [
+      '         ooo      ',
+      '          g       ',
+      '        #####     ',
+      '   ###########    ',
+      '   ###########  k '] },
+    sky_ledges: { floor: '###............###', art: [
+      '        oooo      ',
+      '        ----      ',
+      '                  ',
+      '    ---     ---   ',
+      '                  '] },
+    lift_h: { floor: '##..........####', art: [
+      '      o o o     ',
+      '   M            ',
+      '                '] },
+    lift_v: { floor: '############', art: [
+      '         oo ',
+      '            ',
+      '        ####',
+      '        ####',
+      '        ####',
+      '        ####',
+      '        ####',
+      '   V    ####'] },
+    tunnel: { floor: '################', art: [
+      '  BBBB?BBBBB    ',
+      '                ',
+      '   o o o g o    '] },
+    spikes: { floor: '##############', art: [
+      '       ?      ',
+      '              ',
+      '              ',
+      '     ^^^      '] },
+    crowd: { floor: '################', art: [
+      '     B??B       ',
+      '                ',
+      '                ',
+      '   g    g  k    '] },
+    thorns: { floor: '################', art: [
+      '     BB?BB      ',
+      '                ',
+      '                ',
+      '   p      p     '] },
+    bees: { floor: '##################', art: [
+      '          b       ',
+      '                  ',
+      '    b             ',
+      '                  ',
+      '                  ',
+      '        g         '] },
+    hoppers: { floor: '##############', art: [
+      '        ooo   ',
+      '              ',
+      '              ',
+      '   h      h   '] },
+    checkpoint: { floor: '##########', art: ['    K     '] },
+    bonus_1up: { floor: '############', art: [
+      '     u      ',
+      '            ',
+      '            ',
+      '            '] },
+    bonus_cloud: { floor: '############', art: [
+      '    BcB     ',
+      '            ',
+      '            ',
+      '            '] },
+    bonus_gem: { floor: '##############', art: [
+      '      r       ',
+      '              ',
+      '              ',
+      '     g  g  g  '] },
+    // ---- medal chunks (each level uses exactly three)
+    medal_blocks: { floor: '############', art: [
+      '     *      ',
+      '            ',
+      '            ',
+      '            ',
+      '   BBBBB    ',
+      '            ',
+      '            ',
+      '            '] },
+    medal_pit: { floor: '####......####', art: [
+      '      *       ',
+      '              ',
+      '              '] },
+    medal_high: { floor: '############', art: [
+      '       *    ',
+      '       XX   ',
+      '       XX   ',
+      '       XX   ',
+      '    XX XX   ',
+      '    XX XX   ',
+      '    XX XX   '] },
+    medal_wall: { floor: '###########', art: [
+      '     *     ',
+      '   X   X   ',
+      '   X   X   ',
+      '   X   X   ',
+      '   X   X   ',
+      '   X   X   ',
+      '   X   X   ',
+      '   X   X   ',
+      '   X   X   ',
+      '           ',
+      '           '] },
+    medal_tunnel: { floor: '##############', art: [
+      '   BBBBBBBB   ',
+      '   B  *   B   ',
+      '   B      B   ',
+      '   BBBBBBBB   ',
+      '              ',
+      '              ',
+      '              '] },
+    // ---- endings
+    end: { floor: '####################', art: [
+      '     X              ',
+      '    XX              ',
+      '   XXX              ',
+      '  XXXX    F         '] },
+    boss_arena: { floor: '##########################', art: [
+      '                        XX',
+      '                        XX',
+      '     ---        ---     XX',
+      '                        XX',
+      '                        XX',
+      '                 Z      XX'] }
+  };
+
+  // Concatenate chunks into a 14-row map; ground under ground becomes dirt.
+  function assemble(names) {
+    const rows = [];
+    for (let r = 0; r < H; r++) rows.push('');
+    for (const name of names) {
+      const ch = CHUNKS[name];
+      if (!ch) throw new Error('unknown chunk ' + name);
+      const W = ch.floor.length;
+      const off = GROUND_R - ch.art.length;
+      for (let r = 0; r < GROUND_R; r++) {
+        let line = r >= off ? ch.art[r - off] : '';
+        if (line.length > W) console.warn('chunk', name, 'row too wide');
+        rows[r] += (line + ' '.repeat(W)).slice(0, W);
+      }
+      rows[GROUND_R] += ch.floor.replace(/[.^]/g, ' ');
+      rows[GROUND_R + 1] += ch.floor.replace(/\./g, ' ');
+    }
+    const g = rows.map((r) => r.split(''));
+    for (let r = 1; r < H; r++) {
+      for (let c = 0; c < g[r].length; c++) {
+        if (g[r][c] === '#' && (g[r - 1][c] === '#' || g[r - 1][c] === 'd')) g[r][c] = 'd';
+      }
+    }
+    return g.map((r) => r.join(''));
   }
 
-  function buildLevel(seed, opts) {
-    const W = opts.width;
-    const rnd = rngFactory(seed);
-    // grid of chars
-    const g = [];
-    for (let r = 0; r < H; r++) { g[r] = new Array(W).fill(' '); }
-
-    function set(c, r, ch) { if (c >= 0 && c < W && r >= 0 && r < H) g[r][c] = ch; }
-    function fillGround(c) { set(c, GROUND_R, '#'); set(c, GROUND_R + 1, 'd'); }
-
-    // base ground everywhere
-    for (let c = 0; c < W; c++) fillGround(c);
-
-    // pits (skip start and finish zones)
-    const pits = [];
-    const numPits = opts.pits || 0;
-    for (let i = 0; i < numPits; i++) {
-      const pw = 2 + Math.floor(rnd() * 2);
-      const pc = 10 + Math.floor(rnd() * (W - 30));
-      pits.push([pc, pw]);
-      for (let c = pc; c < pc + pw; c++) { set(c, GROUND_R, ' '); set(c, GROUND_R + 1, ' '); }
-    }
-    function overPit(c) {
-      for (const [pc, pw] of pits) if (c >= pc - 1 && c <= pc + pw) return true;
-      return false;
-    }
-
-    // raised ground ledges (variety + exercises terrain edges)
-    const numLedges = opts.ledges || 0;
-    for (let i = 0; i < numLedges; i++) {
-      const len = 4 + Math.floor(rnd() * 5);
-      const lh = 1 + Math.floor(rnd() * 2);
-      const c0 = 10 + Math.floor(rnd() * (W - 40));
-      let free = true;
-      for (let c = c0 - 1; c <= c0 + len; c++) {
-        if (overPit(c) || g[GROUND_R - 1][c] !== ' ') free = false;
-      }
-      if (!free) continue;
-      for (let c = c0; c < c0 + len; c++) {
-        set(c, GROUND_R - lh, '#');
-        for (let r = GROUND_R - lh + 1; r < GROUND_R; r++) set(c, r, 'd');
-      }
-    }
-
-    // player start
-    set(2, GROUND_R - 1, 'S');
-
-    // mid-level checkpoint on flat ground
-    {
-      let kc = Math.floor(W / 2);
-      while (kc < W - 25 && (overPit(kc) || g[GROUND_R - 1][kc] !== ' ' || g[GROUND_R - 2][kc] !== ' ')) kc++;
-      set(kc, GROUND_R - 1, 'K');
-    }
-
-    // pipes
-    const numPipes = opts.pipes || 0;
-    for (let i = 0; i < numPipes; i++) {
-      const c = 14 + Math.floor(rnd() * (W - 40));
-      if (overPit(c) || overPit(c + 1)) continue;
-      if (g[GROUND_R - 1][c] !== ' ' || g[GROUND_R - 1][c + 1] !== ' ') continue;
-      const ph = 1 + Math.floor(rnd() * 2); // height in body tiles
-      const topR = GROUND_R - 1 - ph;
-      set(c, topR, '[');
-      set(c + 1, topR, ']');
-      for (let r = topR + 1; r <= GROUND_R - 1; r++) { set(c, r, '{'); set(c + 1, r, '}'); }
-    }
-
-    // floating brick/question rows
-    const numRows = opts.blockRows || 0;
-    for (let i = 0; i < numRows; i++) {
-      const len = 3 + Math.floor(rnd() * 4);
-      const c0 = 8 + Math.floor(rnd() * (W - 24));
-      const r = GROUND_R - 4 - Math.floor(rnd() * 2);
-      for (let c = c0; c < c0 + len; c++) {
-        if (c >= W - 8) break;
-        const k = rnd();
-        if (k < 0.18) set(c, r, '?');
-        else if (k < 0.26) set(c, r, 'm');
-        else set(c, r, 'B');
-      }
-    }
-
-    // lone power-up block guaranteed early
-    set(7, GROUND_R - 4, 'm');
-
-    // one-way platforms
-    const numPlat = opts.platforms || 0;
-    for (let i = 0; i < numPlat; i++) {
-      const len = 2 + Math.floor(rnd() * 3);
-      const c0 = 12 + Math.floor(rnd() * (W - 30));
-      const r = GROUND_R - 3 - Math.floor(rnd() * 3);
-      for (let c = c0; c < c0 + len; c++) set(c, r, '-');
-    }
-
-    // spikes in some pits floors (only shallow decorative) - skip for safety
-
-    // coins: arcs and lines
-    const numCoinGroups = opts.coins || 0;
-    for (let i = 0; i < numCoinGroups; i++) {
-      const c0 = 6 + Math.floor(rnd() * (W - 16));
-      const len = 3 + Math.floor(rnd() * 4);
-      const r = GROUND_R - 3 - Math.floor(rnd() * 4);
-      for (let j = 0; j < len; j++) {
-        const c = c0 + j;
-        if (c >= W - 6) break;
-        if (g[r][c] === ' ') set(c, r, 'o');
-      }
-    }
-
-    // enemies on ground
-    const numEnemies = opts.enemies || 0;
-    for (let i = 0; i < numEnemies; i++) {
-      const c = 12 + Math.floor(rnd() * (W - 28));
-      if (overPit(c)) continue;
-      // don't place inside a pipe column
-      if (g[GROUND_R - 1][c] !== ' ') continue;
-      const koopa = opts.koopas && rnd() < 0.4;
-      set(c, GROUND_R - 1, koopa ? 'k' : 'g');
-    }
-
-    // finish: clear last zone, ensure solid ground, place flag
-    for (let c = W - 12; c < W; c++) { fillGround(c); }
-    set(W - 8, GROUND_R - 1, 'F');
-
-    // staircase before flag (classic)
-    for (let s = 0; s < 4; s++) {
-      for (let h = 0; h <= s; h++) {
-        set(W - 18 + s, GROUND_R - 1 - h, 'X');
-      }
-    }
-
-    return g.map((row) => row.join(''));
-  }
-
-  const configs = [
-    { name: 'WORLD 1-1  GREEN HILLS', theme: 'overworld', width: 110,
-      pits: 2, pipes: 2, ledges: 2, blockRows: 2, platforms: 1, coins: 4, enemies: 4, koopas: false },
-    { name: 'WORLD 1-2  CRYSTAL CAVERN', theme: 'cave', width: 120,
-      pits: 3, pipes: 2, ledges: 3, blockRows: 3, platforms: 2, coins: 6, enemies: 5, koopas: true },
-    { name: 'WORLD 1-3  CLOUD TOPS', theme: 'sky', width: 130,
-      pits: 4, pipes: 1, ledges: 2, blockRows: 2, platforms: 4, coins: 6, enemies: 6, koopas: true },
-    { name: 'WORLD 2-1  SUNSET FIELDS', theme: 'dusk', width: 140,
-      pits: 4, pipes: 3, ledges: 3, blockRows: 3, platforms: 2, coins: 7, enemies: 8, koopas: true },
-    { name: 'WORLD 2-2  DEEP CAVES', theme: 'cave', width: 150,
-      pits: 5, pipes: 5, ledges: 4, blockRows: 3, platforms: 3, coins: 7, enemies: 8, koopas: true },
-    { name: 'WORLD 2-3  FORTRESS RUN', theme: 'castle', width: 160,
-      pits: 6, pipes: 3, ledges: 4, blockRows: 4, platforms: 4, coins: 8, enemies: 10, koopas: true }
+  const defs = [
+    { name: 'WORLD 1-1  GREEN HILLS', theme: 'overworld',
+      tips: [
+        'A: SALTAR   B: CORRER   MANTEN A PARA SALTAR MAS ALTO',
+        'CORRE CON B Y LLENA EL MEDIDOR: SALTARAS MUCHO MAS LEJOS',
+        'Y: SALTO GIRATORIO. ELIMINA ENEMIGOS DE UN GOLPE',
+        'EN EL AIRE PULSA ABAJO PARA UN GOLPE AL SUELO. ROMPE LADRILLOS'
+      ],
+      chunks: ['start', 'flat_coins', 'blocks_row', 'tip', 'pit_small', 'pipes', 'medal_blocks', 'crowd',
+        'tip', 'hills', 'checkpoint', 'tip', 'tunnel', 'pyramid', 'medal_high', 'pit_small', 'bonus_1up',
+        'flat_coins', 'medal_pit', 'end'] },
+    { name: 'WORLD 1-2  CRYSTAL CAVERN', theme: 'cave',
+      tips: ['MANTEN B SOBRE UN CAPARAZON PARA AGARRARLO. SUELTA B PARA LANZARLO'],
+      chunks: ['start', 'tunnel', 'pit_small', 'crowd', 'medal_tunnel', 'thorns', 'pipes', 'bonus_cloud',
+        'checkpoint', 'hoppers', 'medal_blocks', 'pit_big', 'tunnel', 'crowd', 'medal_high', 'end'] },
+    { name: 'WORLD 1-3  CLOUD TOPS', theme: 'sky',
+      tips: ['CON LA NUBE: MANTEN A EN EL AIRE PARA PLANEAR'],
+      chunks: ['start', 'bonus_cloud', 'sky_ledges', 'lift_h', 'bees', 'medal_pit', 'checkpoint',
+        'sky_ledges', 'lift_v', 'medal_high', 'lift_h', 'bees', 'medal_blocks', 'pit_big', 'end'] },
+    { name: 'WORLD 2-1  SUNSET FIELDS', theme: 'dusk',
+      tips: ['SALTA CONTRA UNA PARED Y PULSA A PARA REBOTAR HACIA ARRIBA'],
+      chunks: ['start', 'hills', 'crowd', 'spikes', 'medal_wall', 'thorns', 'bonus_gem', 'checkpoint',
+        'hoppers', 'pit_big', 'pipes', 'medal_blocks', 'hills', 'bees', 'medal_pit', 'end'] },
+    { name: 'WORLD 2-2  DEEP CAVES', theme: 'cave',
+      chunks: ['start_plain', 'thorns', 'tunnel', 'pit_big', 'medal_tunnel', 'hoppers', 'crowd', 'lift_h',
+        'checkpoint', 'thorns', 'bonus_1up', 'medal_wall', 'pipes', 'spikes', 'crowd', 'medal_pit', 'end'] },
+    { name: 'WORLD 2-3  FORTRESS', theme: 'castle',
+      tips: ['EL REY GLOOP TE ESPERA. SALTALE ENCIMA 3 VECES'],
+      chunks: ['start_plain', 'spikes', 'thorns', 'pit_big', 'medal_high', 'lift_h', 'crowd', 'checkpoint',
+        'bonus_gem', 'spikes', 'medal_wall', 'lift_v', 'hoppers', 'medal_pit', 'pit_small', 'tip', 'boss_arena'] }
   ];
 
-  const levels = configs.map((cfg, i) => ({
-    name: cfg.name,
-    theme: cfg.theme,
+  const levels = defs.map((d) => ({
+    name: d.name,
+    theme: d.theme,
+    tips: d.tips || [],
     groundRow: GROUND_R,
-    map: buildLevel(1000 + i * 777, cfg)
+    map: assemble(d.chunks)
   }));
 
-  // World map: node positions on the BASE_W x BASE_H screen, linked to level index.
+  // World map: node positions on a 384-wide design canvas, linked to level index.
   const worldMap = {
-    bg: '#2e7d32',
     nodes: [
       { x: 60, y: 92, level: 0 },
       { x: 120, y: 122, level: 1 },
       { x: 182, y: 92, level: 2 },
       { x: 244, y: 122, level: 3 },
       { x: 300, y: 96, level: 4 },
-      { x: 350, y: 66, level: 5 }
+      { x: 350, y: 66, level: 5, castle: true }
     ],
-    // edges connect node index a->b (drawn as paths)
     edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
   };
 
   G.Levels = levels;
   G.WorldMapData = worldMap;
+  G.LevelChunks = CHUNKS;
 })(window.GAME = window.GAME || {});

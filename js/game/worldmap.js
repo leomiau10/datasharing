@@ -132,10 +132,19 @@
       for (let i = 0; i < this.nodes.length; i++) {
         const nd = this.nodes[i];
         let img;
-        if (G.Save.isCleared(nd.level)) img = S.mapNodeDone;
+        if (nd.castle) img = S.mapCastle;
+        else if (G.Save.isCleared(nd.level)) img = S.mapNodeDone;
         else if (this.isUnlocked(i)) img = S.mapNode;
         else img = S.mapNodeLock;
-        R.spriteS(img, nd.x - img.width / 2, nd.y - img.height / 2);
+        R.spriteS(img, nd.x - img.width / 2, nd.y - img.height / 2 - (nd.castle ? 4 : 0));
+        // medals collected in this level
+        const m = G.Save.medals(nd.level);
+        for (let k = 0; k < 3; k++) {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(nd.x - 7 + k * 5, nd.y + 7, 4, 4);
+          ctx.fillStyle = (m & (1 << k)) ? '#ffd84a' : '#4a5a4a';
+          ctx.fillRect(nd.x - 6 + k * 5, nd.y + 8, 2, 2);
+        }
       }
 
       // hero

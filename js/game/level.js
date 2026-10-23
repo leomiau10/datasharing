@@ -25,6 +25,16 @@
       this.items = [];
       this.shots = [];
       this.particles = [];
+      this.platforms = [];
+      this.signs = [];
+      this.tip = null;
+      this.medalCount = 0;
+      this.medalsGot = 0;
+      this.medalsHad = G.Save.medals(game.levelIndex);
+      this.hasBoss = false;
+      this.arenaX = null;
+      this.arenaLock = false;
+      this.shake = 0;
       this.flagX = null;
       this.checkpoint = null;
       this.playerStart = { x: TILE * 2, y: TILE * 2 };
@@ -61,7 +71,7 @@
           }
         }
       }
-      if (this.flagX == null) this.flagX = this.pixelW - TILE * 3;
+      if (this.flagX == null && !this.hasBoss) this.flagX = this.pixelW - TILE * 3;
     }
 
     spawn(type, c, r) {
@@ -69,7 +79,27 @@
       switch (type) {
         case 'player': this.playerStart = { x: x, y: y }; break;
         case 'goomba': this.enemies.push(new G.Blob(x, y)); break;
-        case 'koopa': this.enemies.push(new G.Snail(x, y)); break;
+        case 'koopa': this.enemies.push(new G.Snail(x, y, this)); break;
+        case 'spiky': this.enemies.push(new G.Spiky(x, y)); break;
+        case 'bee': this.enemies.push(new G.Bee(x, y)); break;
+        case 'hopper': this.enemies.push(new G.Hopper(x, y)); break;
+        case 'boss':
+          this.enemies.push(new G.Boss(x, y));
+          this.hasBoss = true;
+          this.arenaX = (c - 17) * TILE;
+          break;
+        case 'medal': {
+          const idx = this.medalCount++;
+          this.items.push(new G.Medal(x, y, idx, !!(this.medalsHad & (1 << idx))));
+          break;
+        }
+        case 'plat_h': this.platforms.push(new G.MovingPlatform(x, y, 'h')); break;
+        case 'plat_v': this.platforms.push(new G.MovingPlatform(x, y, 'v')); break;
+        case 'sign': this.signs.push({ x: x, y: y, text: (this.def.tips || [])[this.signs.length] || '' }); break;
+        case 'oneup_block': case 'cloud_block': case 'gem_block':
+          this.grid[r][c] = G.Tiles.T.QUESTION;
+          this.questionState[c + ',' + r] = type.split('_')[0];
+          break;
         case 'coin': this.items.push(new G.Coin(x, y)); break;
         case 'flag': this.flagX = x; break;
         case 'checkpoint': this.checkpoint = { x: x, y: y + TILE, reached: false }; break;
@@ -80,15 +110,26 @@
       }
     }
 
-    // Foreground bushes standing on the ground (overworld-like themes only).
+    // Themed scenery standing on exposed ground (drawn behind the tiles' foreground actors).
     buildDecor() {
       const d = [];
-      if (this.theme !== 'overworld' && this.theme !== 'dusk') return d;
+      const S = G.Sprites, T = G.Tiles.T;
       const rnd = G.Gfx.rng(this.w * 13 + 7);
-      for (let i = 0; i < Math.floor(this.w / 9); i++) {
-        const c = 4 + Math.floor(rnd() * (this.w - 8));
-        if (this.tileAt(c, 12) === G.Tiles.T.GROUND && this.tileAt(c, 11) === G.Tiles.T.EMPTY) {
-          d.push({ img: G.Sprites.bush, x: c * TILE - 8, y: this.groundY - G.Sprites.bush.height + 1 });
+      const green = this.theme === 'overworld' || this.theme === 'dusk';
+      if (!green && this.theme !== 'cave') return d;
+      for (let c = 3; c < this.w - 3; c++) {
+        let r = 1;
+        while (r < this.h && this.tileAt(c, r) === T.EMPTY) r++;
+        if (r >= this.h || this.tileAt(c, r) !== T.GROUND || this.tileAt(c, r - 1) !== T.EMPTY) continue;
+        const top = r * TILE;
+        const k = rnd();
+        if (green) {
+          if (k < 0.05 && this.tileAt(c + 1, r) === T.GROUND) { d.push({ img: S.tree, x: c * TILE - 6, y: top - S.tree.height + 1 }); c += 3; }
+          else if (k < 0.13) { d.push({ img: S.bush, x: c * TILE - 8, y: top - S.bush.height + 1 }); c += 2; }
+          else if (k < 0.28) d.push({ img: S.flowerDecor[Math.floor(rnd() * 3)], x: c * TILE + 3, y: top - 9 });
+        } else if (k < 0.12) {
+          d.push({ img: S.crystal, x: c * TILE + 2, y: top - S.crystal.height + 1 });
+          c += 1;
         }
       }
       return d;
@@ -126,9 +167,19 @@
         const kind = this.questionState[key];
         this.setTile(c, r, T.USED);
         this.questionState[key] = 'used';
+        const ix = c * TILE, iy = r * TILE - TILE;
         if (kind === 'power') {
           const small = this.player.form === 'small';
-          this.items.push(small ? new G.Berry(c * TILE, r * TILE - TILE) : new G.Flower(c * TILE, r * TILE - TILE));
+          this.items.push(small ? new G.Berry(ix, iy) : new G.Flower(ix, iy));
+          G.Audio.sfx.powerup();
+        } else if (kind === 'oneup') {
+          this.items.push(new G.Heart(ix, iy));
+          G.Audio.sfx.powerup();
+        } else if (kind === 'cloud') {
+          this.items.push(this.player.form === 'small' ? new G.Berry(ix, iy) : new G.CloudItem(ix, iy));
+          G.Audio.sfx.powerup();
+        } else if (kind === 'gem') {
+          this.items.push(new G.Gem(ix, iy));
           G.Audio.sfx.powerup();
         } else {
           this.particles.push(new G.CoinPop(c * TILE + 3, r * TILE - TILE));
@@ -153,6 +204,68 @@
       } else {
         G.Audio.sfx.bump();
       }
+    }
+
+    // Sliding shell hits a block from the side.
+    shellHitBlock(c, r) {
+      const id = this.tileAt(c, r), T = G.Tiles.T;
+      if (id === T.QUESTION) this.bumpBlock(c, r);
+      else if (id === T.BRICK) this.breakBrick(c, r);
+    }
+
+    breakBrick(c, r) {
+      this.setTile(c, r, G.Tiles.T.EMPTY);
+      for (let i = 0; i < 4; i++) {
+        this.particles.push(new G.Debris(c * TILE + 8, r * TILE + 8, (i % 2 ? 1 : -1) * (1 + Math.random()), -2 - Math.random() * 2));
+      }
+      this.game.addScore(50);
+      this.bumpEnemiesAbove(c, r);
+      G.Audio.sfx.bump();
+    }
+
+    // Ground pound landing: break bricks / hit blocks below, shake, knock nearby enemies.
+    // Returns true if the hero broke through and should keep falling.
+    poundImpact(p) {
+      const T = G.Tiles.T;
+      const r = Math.floor((p.y + p.h + 1) / TILE);
+      const c0 = Math.floor(p.x / TILE), c1 = Math.floor((p.x + p.w - 1) / TILE);
+      let broke = false;
+      for (let c = c0; c <= c1; c++) {
+        const id = this.tileAt(c, r);
+        if (id === T.BRICK) { this.breakBrick(c, r); broke = true; }
+        else if (id === T.QUESTION) this.bumpBlock(c, r);
+      }
+      this.shake = 8;
+      this.particles.push(new G.Puff(p.x - 2, p.y + p.h - 2));
+      this.particles.push(new G.Puff(p.x + p.w + 2, p.y + p.h - 2));
+      for (const e of this.enemies) {
+        if (e.dying || e.boss || e.carried) continue;
+        const near = Math.abs((e.x + e.w / 2) - p.cx) < 48 && Math.abs((e.y + e.h) - (p.y + p.h)) < 10;
+        if (near) { G.launchEnemy(e); this.game.addScore(200); this.addScore(e.x, e.y, 200); }
+      }
+      return broke;
+    }
+
+    // Spin jump / pound / invincibility defeat enemies outright.
+    poofEnemy(e) {
+      e.dying = true;
+      e.remove = true;
+      for (let i = 0; i < 3; i++) this.particles.push(new G.Puff(e.x + e.w / 2 + (i - 1) * 5, e.y + e.h / 2));
+      this.particles.push(new G.Sparkle(e.x + e.w / 2, e.y + e.h / 2));
+      this.game.addScore(200);
+      this.addScore(e.x, e.y, 200);
+      G.Audio.sfx.stomp();
+    }
+
+    startStar() {
+      this.player.star = 600;
+      G.Audio.startMusic('star');
+    }
+    onStarEnd() {
+      if (!this.cleared && !this.failed) G.Audio.startMusic(this.arenaLock ? 'boss' : this.theme);
+    }
+    bossDefeated() {
+      if (!this.cleared && !this.failed) this.clearLevel();
     }
 
     addScore(x, y, val) { this.particles.push(new G.FloatText(x, y, '+' + val)); }
@@ -194,16 +307,36 @@
       this.timeAcc += dt;
       if (this.timeAcc >= 1) { this.timeAcc -= 1; this.time--; if (this.time <= 0) this.killPlayer(); }
 
+      for (const pl of this.platforms) pl.update();
       player.update(this);
       this.updateCheckpoint();
+      this.updateArena();
+
+      // signs: show a tip while standing near one
+      this.tip = null;
+      for (const sg of this.signs) if (Math.abs(player.cx - (sg.x + 8)) < 14 && Math.abs(player.y + player.h - (sg.y + 16)) < 24) this.tip = sg.text;
 
       if (this.flagX != null && player.x + player.w >= this.flagX && !this.cleared) this.clearLevel();
       if (player.y > this.pixelH + 40) this.killPlayer();
 
       for (const e of this.enemies) e.update(this);
       for (const e of this.enemies) {
-        if (e.dying || !e.alive) continue;
-        if (G.Physics.aabb(player, e)) e.onPlayer(player, this);
+        if (e.dying || !e.alive || e.carried) continue;
+        if (!G.Physics.aabb(player, e)) continue;
+        if (player.state !== 'play') break;
+        if (player.star > 0 && !e.boss) {
+          G.launchEnemy(e);
+          this.game.addScore(200); this.addScore(e.x, e.y, 200);
+          G.Audio.sfx.stomp();
+          continue;
+        }
+        if (!e.boss && (player.spinning || player.pound) && G.isStomp(player, e)) {
+          this.poofEnemy(e);
+          if (player.spinning) { player.vy = G.Input.down('spin') || G.Input.down('jump') ? -5.5 : -3.5; player.chain++; }
+          continue;
+        }
+        if (e.boss && player.pound && G.isStomp(player, e)) { e.hit(this, player); player.pound = null; continue; }
+        e.onPlayer(player, this);
       }
       this.enemies = this.enemies.filter((e) => !e.remove);
 
@@ -216,6 +349,15 @@
 
       this.updateParticles();
       this.updateCamera();
+    }
+
+    // Boss arena: once inside, the camera and hero are locked to it and the boss wakes up.
+    updateArena() {
+      if (this.arenaX == null || this.arenaLock) return;
+      if (this.player.x > this.arenaX + 64) {
+        this.arenaLock = true;
+        G.Audio.startMusic('boss');
+      }
     }
 
     updateCheckpoint() {
@@ -237,7 +379,7 @@
     clearLevel() {
       this.cleared = true;
       this.outTimer = 0;
-      this.player.startWin();
+      this.player.startWin(this.hasBoss);
       this.game.addScore(Math.max(0, this.time) * 10);
       G.Audio.stopMusic();
       G.Audio.sfx.flag();
@@ -256,7 +398,8 @@
     // Contact damage: power-ups are lost first, then a life.
     hurtPlayer() {
       const p = this.player;
-      if (p.invuln > 0 || this.cleared || this.failed) return;
+      if (p.invuln > 0 || p.star > 0 || this.cleared || this.failed) return;
+      if (p.carry) { p.carry.drop(); p.carry = null; }
       if (p.big) {
         p.shrink();
         G.Audio.sfx.hurt();
@@ -269,13 +412,18 @@
       const p = this.player;
       const W = G.R.BASE_W, H = G.R.BASE_H;
       let tx = p.cx - W / 2 + p.facing * 24;
-      tx = Math.max(0, Math.min(tx, Math.max(0, this.pixelW - W)));
+      const minX = this.arenaLock ? this.arenaX : 0;
+      tx = Math.max(minX, Math.min(tx, Math.max(0, this.pixelW - W)));
       if (this.camX == null || snap) this.camX = tx;
       else this.camX += (tx - this.camX) * 0.12;
       let ty = (p.y + p.h / 2) - H / 2;
       ty = this.pixelH <= H ? this.pixelH - H : Math.max(0, Math.min(ty, this.pixelH - H));
       this.camY += (ty - this.camY) * 0.2;
-      G.R.setCamera(this.camX, this.camY);
+      let sx = 0, sy = 0;
+      if (this.shake > 0) { this.shake--; sx = (Math.random() - 0.5) * this.shake; sy = (Math.random() - 0.5) * this.shake; }
+      G.R.setCamera(this.camX + sx, this.camY + sy);
+      // arena lock: the hero can't walk back off the left edge
+      if (this.arenaLock && p.x < this.camX) { p.x = this.camX; if (p.vx < 0) p.vx = 0; }
     }
 
     render() {
@@ -291,9 +439,11 @@
       const r1 = Math.min(this.h - 1, Math.floor((cam.y + R.BASE_H) / TILE));
       for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) this.drawTile(c, r);
 
+      for (const sg of this.signs) R.sprite(G.Sprites.sign, sg.x - 1, sg.y - 1);
       if (this.checkpoint) this.drawCheckpoint();
-      this.drawFlag();
+      if (this.flagX != null) this.drawFlag();
 
+      for (const pl of this.platforms) pl.render();
       for (const it of this.items) it.render();
       for (const e of this.enemies) e.render();
       for (const s of this.shots) s.render();
