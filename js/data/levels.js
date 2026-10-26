@@ -254,17 +254,32 @@
     map: assemble(d.chunks)
   }));
 
-  // World map: node positions on a 384-wide design canvas, linked to level index.
+  // World map (original layout): two islands joined by a bridge. Coordinates are pixels on the
+  // 384x176 map canvas. Edges carry waypoints so paths bend like an overworld trail.
   const worldMap = {
     nodes: [
-      { x: 60, y: 92, level: 0 },
-      { x: 120, y: 122, level: 1 },
-      { x: 182, y: 92, level: 2 },
-      { x: 244, y: 122, level: 3 },
-      { x: 300, y: 96, level: 4 },
-      { x: 350, y: 66, level: 5, castle: true }
+      { x: 56, y: 104, level: 0 },
+      { x: 128, y: 116, level: 1 },
+      { x: 96, y: 28, level: 2 },
+      { x: 184, y: 64, level: 3 },
+      { x: 288, y: 104, level: 4 },
+      { x: 320, y: 44, level: 5, castle: true }
     ],
-    edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+    edges: [
+      { a: 0, b: 1, pts: [[56, 104], [56, 116], [128, 116]] },
+      { a: 1, b: 2, pts: [[128, 116], [128, 88], [108, 88], [108, 28], [96, 28]] },
+      { a: 1, b: 3, pts: [[128, 116], [184, 116], [184, 64]] },
+      { a: 3, b: 4, pts: [[184, 64], [204, 64], [204, 104], [288, 104]] },
+      { a: 4, b: 5, pts: [[288, 104], [288, 72], [320, 72], [320, 44]] }
+    ],
+    decor: [
+      { k: 'hut', x: 20, y: 84 },
+      { k: 'sign', x: 138, y: 96 },
+      { k: 'fortress', x: 309, y: 17 },
+      { k: 'spire', x: 262, y: 52 },
+      { k: 'spire', x: 344, y: 72 },
+      { k: 'spire', x: 306, y: 108 }
+    ]
   };
 
   G.Levels = levels;
