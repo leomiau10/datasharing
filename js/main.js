@@ -110,6 +110,11 @@
       switch (this.scene) {
         case 'title':
           this.titleScroll += 0.5;
+          if (this.titleLevel) {
+            // attract mode: enemies and coins keep moving behind the logo
+            for (const e of this.titleLevel.enemies) e.update(this.titleLevel);
+            this.titleLevel.enemies = this.titleLevel.enemies.filter((e) => !e.remove);
+          }
           if (In.justPressed('jump') || In.justPressed('start')) {
             G.Audio.resume(); G.Audio.sfx.start();
             this.go(() => this.goMap());
@@ -139,11 +144,18 @@
 
     render() {
       const R = G.R, T = G.Text;
+      const use3D = !!(G.R3 && G.R3.ok());
+      if (use3D && this.scene === 'title' && !this.titleLevel) {
+        this.titleLevel = new G.Level(G.Levels[0], this);
+        this.titleLevel.player.grounded = true;
+      }
+      if (G.R3) G.R3.setActive(use3D && (this.scene === 'level' || this.scene === 'title'));
       switch (this.scene) {
         case 'title': this.renderTitle(); break;
         case 'map': this.worldMap.render(); break;
         case 'level':
-          this.level.render();
+          if (G.R3 && G.R3.ok()) { R.clearTransparent(); G.R3.render(this.level); }
+          else this.level.render();
           G.HUD.render(this, this.level);
           if (this.level.cleared) T.drawCenterShadow('LEVEL CLEAR!', 80, '#ffe000', 2, '#000');
           if (this.paused) {
@@ -174,6 +186,17 @@
 
     renderTitle() {
       const R = G.R, T = G.Text, S = G.Sprites;
+      if (this.titleLevel) {
+        // 3D: slowly pan across World 1-1 behind the logo
+        const L = this.titleLevel;
+        const span = Math.max(0, L.pixelW - R.BASE_W);
+        const k = 0.5 - 0.5 * Math.cos(this.titleScroll * 0.004);
+        R.setCamera(k * Math.min(span, 1400), L.pixelH - R.BASE_H);
+        R.clearTransparent();
+        G.R3.render(L);
+        this.renderTitleText();
+        return;
+      }
       this.bg.draw(this.titleScroll);
       const gy = R.BASE_H - 32;
       for (let c = 0; c <= R.BASE_W / 16 + 1; c++) {
@@ -185,8 +208,13 @@
       R.spriteS(S.blob[(this.animFrame >> 4) & 1], R.BASE_W - 150, gy - 17);
       R.spriteS(S.tQuestion[(this.animFrame >> 3) & 3], R.BASE_W - 110, gy - 36);
 
+      this.renderTitleText();
+    }
+
+    renderTitleText() {
+      const R = G.R, T = G.Text;
       T.drawCenterShadow('PIP QUEST', 26, '#ffffff', 5, '#177a74');
-      T.drawCenterShadow('A 16-BIT ADVENTURE', 70, '#fff6c0', 1, '#000');
+      T.drawCenterShadow('UNA AVENTURA EN 3D', 70, '#fff6c0', 1, '#000');
       if ((this.animFrame >> 5) & 1) T.drawCenterShadow('PULSA A PARA EMPEZAR', 88, '#fff', 1, '#000');
       const help = [
         'A SALTAR    B CORRER / FUEGO / AGARRAR    Y GIRO',
@@ -230,6 +258,7 @@
 
   function init() {
     G.R.init(document.getElementById('game'));
+    if (G.R3) G.R3.init();
     G.Input.bindTouch(document);
     const dpad = document.getElementById('dpad');
     if (dpad) G.Input.bindDpad(dpad);

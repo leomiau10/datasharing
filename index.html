@@ -17,7 +17,10 @@
 </head>
 <body>
   <div id="stage">
-    <canvas id="game"></canvas>
+    <div id="screen">
+      <canvas id="gl"></canvas>
+      <canvas id="game"></canvas>
+    </div>
 
     <button id="mute" class="sysbtn" aria-label="mute">&#128266;</button>
 
@@ -38,6 +41,11 @@
     <button id="startbtn" class="centerbtn" data-btn="start" aria-label="start">START</button>
   </div>
 
+  <!-- three.js (MIT, vendored) for the 2.5D renderer; modules run before DOMContentLoaded -->
+  <script type="module">
+    import * as THREE from './vendor/three.module.min.js';
+    window.THREE = THREE;
+  </script>
   <!-- Data -->
   <script src="js/data/tiles.js"></script>
   <script src="js/data/save.js"></script>
@@ -49,6 +57,7 @@
   <script src="js/engine/physics.js"></script>
   <script src="js/engine/sprites.js"></script>
   <script src="js/engine/backgrounds.js"></script>
+  <script src="js/engine/render3d.js"></script>
   <script src="js/data/levels.js"></script>
   <!-- Game -->
   <script src="js/game/entities.js"></script>

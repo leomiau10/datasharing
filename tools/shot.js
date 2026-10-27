@@ -3,12 +3,13 @@
 const { chromium } = require('playwright');
 const out = process.argv[2] || 'tools';
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2 });
   const errors = [];
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.type() + ': ' + m.text()); });
   page.on('pageerror', (e) => errors.push('PAGEERROR: ' + e.message));
   await page.goto('http://localhost:8099/index.html', { waitUntil: 'networkidle' });
+  console.log('3D renderer active:', await page.evaluate(() => !!(window.GAME.R3 && window.GAME.R3.ok())));
   await page.waitForTimeout(500);
   await page.screenshot({ path: out + '/shot-title.png' });
 

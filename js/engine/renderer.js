@@ -11,7 +11,7 @@
 
   const R = {
     BASE_W: 384, BASE_H: BASE_H, cam: cam,
-    init: init, resize: resize, setCamera: setCamera, clear: clear,
+    init: init, resize: resize, setCamera: setCamera, clear: clear, clearTransparent: clearTransparent,
     rect: rect, rectS: rectS, sprite: sprite, spriteS: spriteS, spriteScaled: spriteScaled, getCtx: getCtx
   };
 
@@ -36,9 +36,17 @@
     }
     const scale = Math.min(vw / w, vh / BASE_H);
     const dpr = window.devicePixelRatio || 1;
-    canvas.style.width = (Math.round(w * scale * dpr) / dpr) + 'px';
-    canvas.style.height = (Math.round(BASE_H * scale * dpr) / dpr) + 'px';
+    const cssW = Math.round(w * scale * dpr) / dpr;
+    const cssH = Math.round(BASE_H * scale * dpr) / dpr;
+    // #screen holds the 3D canvas underneath and this 2D canvas (HUD/overlay) on top
+    const screen = document.getElementById('screen');
+    if (screen) { screen.style.width = cssW + 'px'; screen.style.height = cssH + 'px'; }
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    if (G.R3) G.R3.resize(cssW, cssH);
   }
+
+  function clearTransparent() { ctx.clearRect(0, 0, R.BASE_W, BASE_H); }
 
   function setCamera(x, y) { cam.x = Math.round(x); cam.y = Math.round(y); }
 

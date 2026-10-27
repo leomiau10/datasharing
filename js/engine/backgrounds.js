@@ -148,8 +148,8 @@
   class Background {
     constructor(theme) { this.d = def(theme); this.t = 0; }
 
-    draw(camX) {
-      const ctx = G.R.getCtx();
+    draw(camX, target) {
+      const ctx = target || G.R.getCtx();
       const W = G.R.BASE_W, H = G.R.BASE_H;
       this.t += 0.2;
       ctx.drawImage(this.d.sky, 0, 0, 1, SKY_H, 0, 0, W, H);
