@@ -76,4 +76,11 @@ G.Levels.forEach((L, i) => {
   if (widths.size !== 1) throw new Error('level ' + i + ' ragged');
   game.startLevel(i); tick(5);
 });
+// warp: after clearing the fortress, the pipe on Pip Island leads to Maple Woods
+G.Save.markCleared(5);
+G.Save.setWorld(0, G.Worlds[0].nodes.findIndex((n) => n.warp === 1));
+game.trans = null; game.goMap();
+tap('jump'); tick(2); settle();
+console.log('after warp: world', G.Save.get().mapWorld, 'node', G.Save.get().mapNode, 'scene', game.scene);
+if (G.Save.get().mapWorld !== 1 || game.worldMap.data.name !== 'MAPLE WOODS') throw new Error('warp to world 2 failed');
 console.log('ALL SMOKE TESTS PASSED');

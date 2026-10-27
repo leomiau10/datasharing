@@ -25,17 +25,15 @@
     <button id="mute" class="sysbtn" aria-label="mute">&#128266;</button>
 
     <div id="controls">
-      <!-- One touch zone: slide the thumb between directions -->
-      <div class="pad" id="dpad">
-        <div class="dir up" data-dir="up">&#9650;</div>
-        <div class="dir left" data-dir="left">&#9664;</div>
-        <div class="dir right" data-dir="right">&#9654;</div>
-        <div class="dir down" data-dir="down">&#9660;</div>
+      <!-- Left half: floating stick (touch anywhere, drag to move) -->
+      <div id="lzone">
+        <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
       </div>
-      <div class="actions">
-        <button class="btn spin" data-btn="spin" aria-label="spin">Y</button>
-        <button class="btn run" data-btn="run" aria-label="run">B</button>
-        <button class="btn jump" data-btn="jump" aria-label="jump">A</button>
+      <!-- Right half: action buttons; roll the thumb between them -->
+      <div id="rzone">
+        <div class="btn spin" data-act="spin">Y</div>
+        <div class="btn run" data-act="run">B</div>
+        <div class="btn jump" data-act="jump">A</div>
       </div>
     </div>
     <button id="startbtn" class="centerbtn" data-btn="start" aria-label="start">START</button>

@@ -37,22 +37,26 @@
       }
     }
 
-    blob(14.5, 8.5, 12.8, 8, 'g', null, 0.25);   // west island
-    blob(38.5, 9.5, 7.8, 7.5, 'g', null, 0.25);  // east island
+    for (const isl of data.islands) blob(isl[0], isl[1], isl[2], isl[3], 'g', null, 0.25);
     cliffs('g', 'c', ['~']);
-    blob(9.5, 4, 6, 3.2, 'G', ['g']);            // high plateau
-    cliffs('G', 'C', ['g']);
-    blob(8, 3.5, 2.6, 1.4, 'w', ['G']);          // pond
-    for (let r = 0; r < ROWS; r++) {
-      for (const c of [7, 8]) {
-        if (g[r][c] === 'G' && r > 3) g[r][c] = 'w';  // stream to the edge
-        if (g[r][c] === 'C') g[r][c] = 'f';           // waterfall
+    const pl = data.plateau;
+    if (pl) {
+      blob(pl.blob[0], pl.blob[1], pl.blob[2], pl.blob[3], 'G', ['g']);   // high plateau
+      cliffs('G', 'C', ['g']);
+      if (pl.pond) {
+        blob(pl.pond[0], pl.pond[1], pl.pond[2], pl.pond[3], 'w', ['G']);
+        for (let r = 0; r < ROWS; r++) {
+          for (const c of pl.falls) {
+            if (g[r][c] === 'G' && r > pl.pond[1]) g[r][c] = 'w';  // stream to the edge
+            if (g[r][c] === 'C') g[r][c] = 'f';                     // waterfall
+          }
+        }
+        blob(pl.pool[0], pl.pool[1], pl.pool[2], pl.pool[3], 'w', ['g']); // pool at the foot of the falls
       }
     }
-    blob(8, 10, 2.2, 1.2, 'w', ['g']);           // pool at the foot of the falls
 
     // bridge: sea cells between the islands on the trail rows
-    for (const r of [12, 13]) {
+    for (const r of data.bridgeRows) {
       let c = 20;
       while (c < COLS && g[r][c] !== '~') c++;
       while (c < COLS && g[r][c] === '~') { g[r][c] = 'b'; c++; }
@@ -140,6 +144,45 @@
     x.fillStyle = '#ffd84a'; x.fillRect(10, 11, 2, 4);
     return G.Gfx.outline(c, '#1c1024');
   }
+  function makeMapCactus() {
+    const c = G.Gfx.mk(8, 12), x = c.getContext('2d');
+    x.fillStyle = '#3a9a4a'; x.fillRect(3, 0, 3, 12); x.fillRect(0, 4, 2, 4); x.fillRect(0, 7, 3, 2); x.fillRect(7, 2, 1, 4); x.fillRect(6, 5, 2, 2);
+    x.fillStyle = '#7ad87a'; x.fillRect(4, 1, 1, 10);
+    return G.Gfx.outline(c, '#123a1a');
+  }
+  function makeRock() {
+    const c = G.Gfx.mk(10, 7), x = c.getContext('2d');
+    G.Gfx.disc(x, 5, 4, 3, '#9a8a7a'); x.fillStyle = '#9a8a7a'; x.fillRect(1, 4, 8, 3);
+    x.fillStyle = '#c8b8a8'; x.fillRect(3, 2, 3, 1);
+    return G.Gfx.outline(c, '#3a2a1a');
+  }
+  function makePalm() {
+    const c = G.Gfx.mk(14, 16), x = c.getContext('2d');
+    x.fillStyle = '#8a5a2a'; for (let j = 5; j < 16; j++) x.fillRect(6 + (j > 10 ? 1 : 0), j, 2, 1);
+    x.fillStyle = '#3aaa4a';
+    x.fillRect(1, 3, 6, 2); x.fillRect(7, 3, 6, 2); x.fillRect(0, 5, 2, 2); x.fillRect(12, 5, 2, 2); x.fillRect(5, 1, 4, 2);
+    x.fillStyle = '#8a5a2a'; x.fillRect(6, 4, 2, 2);
+    return G.Gfx.outline(c, '#123a1a');
+  }
+  function makeSnowyPine() {
+    const c = G.Gfx.mk(10, 14), x = c.getContext('2d');
+    const hw = [1, 1, 2, 2, 3, 2, 3, 4, 3, 4, 5];
+    for (let j = 0; j < hw.length; j++) {
+      x.fillStyle = (j % 4 === 0) ? '#ffffff' : '#2a6a4a';
+      x.fillRect(5 - hw[j], j, hw[j] * 2, 1);
+    }
+    x.fillStyle = '#6a4a2a'; x.fillRect(4, 11, 2, 3);
+    return G.Gfx.outline(c, '#0e2a24');
+  }
+  function makeWarp() {
+    const c = G.Gfx.mk(14, 12), x = c.getContext('2d');
+    x.fillStyle = '#2aa88c'; x.fillRect(2, 4, 10, 8);
+    x.fillStyle = '#3cc8a4'; x.fillRect(0, 0, 14, 5);
+    x.fillStyle = '#b8f0e0'; x.fillRect(2, 1, 2, 3); x.fillRect(4, 5, 2, 6);
+    x.fillStyle = '#0e2a28'; x.fillRect(2, 1, 10, 2);
+    return G.Gfx.outline(c, '#0e2a28');
+  }
+
   function makeSpire() {
     const c = G.Gfx.mk(12, 26), x = c.getContext('2d');
     x.fillStyle = '#a89070'; x.fillRect(1, 5, 10, 21);
@@ -154,8 +197,8 @@
   // ---------------------------------------------------------------- baked layers
   function waterFrame(shift) {
     const c = G.Gfx.mk(MW, MH), x = c.getContext('2d');
-    x.fillStyle = '#2f74d8'; x.fillRect(0, 0, MW, MH);
-    x.fillStyle = '#5c9cf0';
+    x.fillStyle = PAL.sea; x.fillRect(0, 0, MW, MH);
+    x.fillStyle = PAL.wave;
     for (let j = 0; j < MH; j += 8) {
       const off = ((j / 8) % 2) * 6 + shift;
       for (let i = -12; i < MW + 12; i += 12) {
@@ -166,7 +209,25 @@
     return c;
   }
 
+  const PALETTES = {
+    green: { sea: '#2f74d8', wave: '#5c9cf0', scatter: ['pine', 'round', 'bush', 'pine'],
+      g: ['#4cc23c', '#7ae060', '#34a030', '#1a4a1a'], G: ['#74d858', '#a8f080', '#52b844', '#1a4a1a'],
+      c: ['#c8843e', '#e8a860', '#9a5a28', '#4a2810'], C: ['#dc9c54', '#f4c078', '#b0703a', '#4a2810'] },
+    forest: { sea: '#2a68c0', wave: '#5090e0', scatter: ['pine', 'pine', 'round', 'pine', 'bush'],
+      g: ['#3a9a3a', '#5ac050', '#2a7a2a', '#123a12'], G: ['#4cb048', '#78d068', '#3a903a', '#123a12'],
+      c: ['#9a6a3a', '#c08a50', '#6a4422', '#3a2008'], C: ['#b07a44', '#d09a60', '#80542a', '#3a2008'] },
+    sand: { sea: '#2a90d8', wave: '#6ac0f8', scatter: ['cactus', 'rock', 'cactus', 'palm'],
+      g: ['#f0c860', '#fff0a0', '#d8a848', '#7a5020'], G: ['#f8d880', '#fff4c0', '#e0b860', '#7a5020'],
+      c: ['#d08850', '#f0a868', '#a86030', '#5a3010'], C: ['#e09a5a', '#f8b878', '#b87038', '#5a3010'] },
+    snow: { sea: '#2a5ab0', wave: '#5a8ad8', scatter: ['snowpine', 'snowpine', 'rock'],
+      g: ['#eef4ff', '#ffffff', '#c8dcf0', '#4a6a90'], G: ['#ffffff', '#ffffff', '#d8e8f8', '#4a6a90'],
+      c: ['#8ab0d8', '#b8d8f8', '#5a80b0', '#203a60'], C: ['#9ac0e4', '#c8e4ff', '#6a90c0', '#203a60'] }
+  };
+  let PAL = PALETTES.green;
+
   function cellColors(t) {
+    const k = PAL[t];
+    if (k) return { base: k[0], hi: k[1], lo: k[2], edge: k[3] };
     switch (t) {
       case 'g': return { base: '#4cc23c', hi: '#7ae060', lo: '#34a030', edge: '#1a4a1a' };
       case 'G': return { base: '#74d858', hi: '#a8f080', lo: '#52b844', edge: '#1a4a1a' };
@@ -268,7 +329,8 @@
       pieces.push({ img: img, x: d.x, y: d.y });
       boxes.push([d.x - 2, d.y - 2, img.width + 4, img.height + 4]);
     }
-    const kinds = [makePine(), makeRoundTree(), makeBush(), makePine()];
+    const makers = { pine: makePine, round: makeRoundTree, bush: makeBush, cactus: makeMapCactus, rock: makeRock, palm: makePalm, snowpine: makeSnowyPine };
+    const kinds = PAL.scatter.map((k) => makers[k]());
     const clear = (px, py, w, h) => {
       for (const b of boxes) if (px < b[0] + b[2] && px + w > b[0] && py < b[1] + b[3] && py + h > b[1]) return false;
       for (const p of onTrail) if (p[0] > px - 6 && p[0] < px + w + 6 && p[1] > py - 4 && p[1] < py + h + 6) return false;
@@ -303,10 +365,12 @@
     return c;
   }
 
-  let cache = null;
-  function art() {
-    if (cache) return cache;
-    const data = G.WorldMapData;
+  const cache = {};
+  let warpIcon = null;
+  function art(wi) {
+    if (cache[wi]) return cache[wi];
+    const data = G.Worlds[wi];
+    PAL = PALETTES[data.palette] || PALETTES.green;
     const grid = buildGrid(data);
     const falls = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (grid[r][c] === 'f') falls.push([c * TS, r * TS]);
@@ -315,20 +379,26 @@
     sx.drawImage(cloud, 0, 0);
     sx.globalCompositeOperation = 'source-in';
     sx.fillStyle = '#000'; sx.fillRect(0, 0, cloud.width, cloud.height);
-    cache = { grid: grid, water: [waterFrame(0), waterFrame(3)], land: buildLand(grid, data), falls: falls, pattern: makePattern(), cloudShadow: shadow };
-    return cache;
+    if (!warpIcon) warpIcon = makeWarp();
+    cache[wi] = { grid: grid, water: [waterFrame(0), waterFrame(3)], land: buildLand(grid, data), falls: falls, pattern: makePattern(), cloudShadow: shadow };
+    return cache[wi];
   }
+
+  // Exposed for tests: the terrain grid of a world map.
+  function gridOf(wi) { return art(wi).grid; }
 
   // ---------------------------------------------------------------- scene
   class WorldMap {
     constructor(game) {
       this.game = game;
-      this.data = G.WorldMapData;
+      const st = G.Save.get();
+      this.world = Math.min(st.mapWorld || 0, G.Worlds.length - 1);
+      this.data = G.Worlds[this.world];
       this.nodes = this.data.nodes;
-      this.current = Math.min(G.Save.get().mapNode || 0, this.nodes.length - 1);
+      this.current = Math.min(st.mapNode || 0, this.nodes.length - 1);
       this.bob = 0;
       this.move = null; // { pts, len, d, to }
-      this.art = art();
+      this.art = art(this.world);
       G.Audio.startMusic('map');
     }
 
@@ -347,9 +417,26 @@
       return n;
     }
 
+    // Last level of this world (its fortress) — clearing it opens the warp to the next world.
+    lastLevel() {
+      let m = 0;
+      for (const n of this.nodes) if (n.level != null) m = Math.max(m, n.level);
+      return m;
+    }
+
     isUnlocked(i) {
-      const lvl = this.nodes[i].level;
-      return lvl === 0 || G.Save.isCleared(lvl - 1);
+      const n = this.nodes[i];
+      if (n.warp === -1) return true;
+      if (n.warp === 1) return G.Save.isCleared(this.lastLevel());
+      return n.level === 0 || G.Save.isCleared(n.level - 1);
+    }
+
+    // Travel to the neighbouring world map, arriving on its matching warp.
+    warpTo(dir) {
+      const target = this.world + dir;
+      const arrive = G.Worlds[target].nodes.findIndex((n) => n.warp === -dir);
+      G.Save.setWorld(target, Math.max(0, arrive));
+      this.game.go(() => this.game.goMap());
     }
 
     tryMove(dx, dy) {
@@ -392,7 +479,8 @@
         if (this.isUnlocked(this.current)) {
           G.Audio.sfx.start();
           const nd = this.nodes[this.current], o = this.origin();
-          this.game.go(() => this.game.startLevel(nd.level), nd.x + o.x, nd.y + o.y);
+          if (nd.warp) this.warpTo(nd.warp);
+          else this.game.go(() => this.game.startLevel(nd.level), nd.x + o.x, nd.y + o.y);
         } else {
           G.Audio.sfx.bump();
         }
@@ -431,7 +519,10 @@
       const nd = this.nodes[this.current];
       R.spriteS(S.lifeIcon, o.x, 3);
       T.drawShadow('x' + this.game.lives, o.x + 16, 6, '#fff', 1, '#3a2a1a');
-      const name = G.Levels[nd.level].name;
+      let name;
+      if (nd.warp === 1) name = 'IR A ' + G.Worlds[this.world + 1].name;
+      else if (nd.warp === -1) name = 'VOLVER A ' + G.Worlds[this.world - 1].name;
+      else name = G.Levels[nd.level].name;
       const scale = T.width(name, 2) <= MW - 48 ? 2 : 1;
       T.drawShadow(name, o.x + 44, scale === 2 ? 3 : 6, '#ffffff', scale, '#3a2a1a');
 
@@ -454,6 +545,12 @@
       // level dots
       for (let i = 0; i < this.nodes.length; i++) {
         const n = this.nodes[i];
+        if (n.warp) {
+          ctx.globalAlpha = this.isUnlocked(i) ? 1 : 0.45;
+          ctx.drawImage(warpIcon, n.x - 8, n.y - 9);
+          ctx.globalAlpha = 1;
+          continue;
+        }
         let fill;
         if (G.Save.isCleared(n.level)) fill = '#4ac0f0';
         else if (this.isUnlocked(i)) fill = ((tt >> 4) & 1) ? '#fff08a' : '#f8d038';
@@ -479,16 +576,20 @@
         ctx.globalAlpha = 0.9; ctx.drawImage(S.cloud, Math.round(cx), cy); ctx.globalAlpha = 1;
       }
 
+      // world name tag (bottom-left of the window)
+      R.rectS(2, MH - 15, T.width(this.data.name, 1) + 8, 13, 'rgba(20,10,30,0.55)');
+      T.drawShadow(this.data.name, 6, MH - 12, '#fff6c0', 1, '#000');
+
       // info panel: coins + medals of the selected level
       R.rectS(MW - 76, 2, 74, 13, 'rgba(20,10,30,0.55)');
       ctx.drawImage(S.coin[0], MW - 72, 3, 7, 10);
       T.drawShadow('x' + this.game.coins, MW - 63, 5, '#ffe060', 1, '#000');
-      const m = G.Save.medals(nd.level);
+      const m = nd.level != null ? G.Save.medals(nd.level) : 0;
       for (let k = 0; k < 3; k++) ctx.drawImage((m & (1 << k)) ? S.medal : S.medalFaded, MW - 34 + k * 10, 3, 8, 11);
 
       // prompt over the southern sea
       if (!this.move && ((tt >> 5) & 1)) {
-        const msg = this.isUnlocked(this.current) ? 'PULSA A PARA JUGAR' : 'NIVEL BLOQUEADO';
+        const msg = !this.isUnlocked(this.current) ? 'BLOQUEADO' : (nd.warp ? 'PULSA A PARA VIAJAR' : 'PULSA A PARA JUGAR');
         T.drawShadow(msg, Math.round((MW - T.width(msg, 1)) / 2), MH - 22, '#fff', 1, '#1c1024');
       }
       ctx.restore();
@@ -496,4 +597,5 @@
   }
 
   G.WorldMap = WorldMap;
+  G.WorldMapGrid = gridOf;
 })(window.GAME = window.GAME || {});

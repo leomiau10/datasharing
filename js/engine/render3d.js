@@ -28,7 +28,12 @@
     cave: { sky: 0x9a9ae8, ground: 0x282850, hemi: 1.2, sun: 0xc0c8ff, sunI: 1.7 },
     sky: { sky: 0xffffff, ground: 0xa0b4e0, hemi: 1.8, sun: 0xfff8e8, sunI: 2.4 },
     dusk: { sky: 0xffc0a0, ground: 0x4a2858, hemi: 1.4, sun: 0xffa868, sunI: 2.6 },
-    castle: { sky: 0xffa880, ground: 0x301018, hemi: 1.1, sun: 0xffc890, sunI: 2.0 }
+    castle: { sky: 0xffa880, ground: 0x301018, hemi: 1.1, sun: 0xffc890, sunI: 2.0 },
+    forest: { sky: 0xd8f0d8, ground: 0x3a5a2a, hemi: 1.5, sun: 0xfff0d0, sunI: 2.3 },
+    desert: { sky: 0xfff0d8, ground: 0x8a6a3a, hemi: 1.6, sun: 0xfff4d8, sunI: 2.8 },
+    snow: { sky: 0xe8f4ff, ground: 0x8aa0c0, hemi: 1.8, sun: 0xf4f8ff, sunI: 2.2 },
+    volcano: { sky: 0xff9a60, ground: 0x2a0a08, hemi: 1.1, sun: 0xffa060, sunI: 2.2 },
+    night: { sky: 0x8a9ae0, ground: 0x1a1a3a, hemi: 1.0, sun: 0xc8d4ff, sunI: 1.5 }
   };
 
   // ------------------------------------------------------------------ setup

@@ -84,6 +84,45 @@
     return c;
   }
 
+  // Row of pine silhouettes that tiles horizontally.
+  function pines(h, color, hi, seed, minH) {
+    const c = G.Gfx.mk(PERIOD, h), x = c.getContext('2d');
+    const rnd = G.Gfx.rng(seed);
+    let px = 0;
+    while (px < PERIOD) {
+      const th = (minH || 30) + Math.floor(rnd() * (h - (minH || 30)));
+      const tw = Math.floor(th * 0.42);
+      for (let j = 0; j < th; j++) {
+        const hw = Math.max(1, Math.floor((j / th) * tw / 2 + ((j % 6) < 2 ? -1 : 0)));
+        x.fillStyle = color; x.fillRect(px + tw / 2 - hw, h - th + j, hw * 2, 1);
+        x.fillStyle = hi; x.fillRect(px + tw / 2 - hw, h - th + j, 1, 1);
+      }
+      x.fillStyle = color; x.fillRect(px + tw / 2 - 1, h - 4, 3, 4);
+      px += Math.floor(tw * 0.7) + Math.floor(rnd() * 10);
+    }
+    x.fillStyle = color; x.fillRect(0, h - 6, PERIOD, 6);
+    return c;
+  }
+
+  // Jagged mountain range with optional snow caps.
+  function mountains(h, color, hi, cap, seed) {
+    const c = G.Gfx.mk(PERIOD, h), x = c.getContext('2d');
+    const rnd = G.Gfx.rng(seed);
+    const peaks = [];
+    for (let i = 0; i < 6; i++) peaks.push([i * PERIOD / 6 + rnd() * 30, 10 + rnd() * (h * 0.45)]);
+    for (let i = 0; i < PERIOD; i++) {
+      let top = h;
+      for (const p of peaks) {
+        for (const o of [-PERIOD, 0, PERIOD]) top = Math.min(top, p[1] + Math.abs(i - p[0] - o) * 0.9);
+      }
+      top = Math.round(top);
+      x.fillStyle = color; x.fillRect(i, top, 1, h - top);
+      x.fillStyle = hi; x.fillRect(i, top, 1, 1);
+      if (cap && top < h * 0.42) { x.fillStyle = cap; x.fillRect(i, top, 1, Math.max(2, Math.round(h * 0.42 - top) >> 1)); }
+    }
+    return c;
+  }
+
   function sun(r, color, edge) {
     const c = G.Gfx.mk(r * 2 + 2, r * 2 + 2), x = c.getContext('2d');
     G.Gfx.disc(x, r + 1, r + 1, r, edge);
@@ -121,6 +160,55 @@
             { img: clouds(90, 4, 21, '#ffb0a0', '#c05a7a'), scroll: 0.1, y: 20 },
             { img: hills(120, 70, 36, [2, 5, 9], '#7a3a80', '#a85a9a', 31), scroll: 0.2, y: H - 120 },
             { img: hills(90, 50, 26, [3, 6, 11], '#4a2468', '#6a3a8c', 33), scroll: 0.4, y: H - 90 }
+          ]
+        };
+      case 'forest':
+        return {
+          sky: gradient(['#6ab8e8', '#b8e0d0', '#e8f4d8']),
+          layers: [
+            { img: clouds(90, 4, 51, '#ffffff', '#d8ecf0'), scroll: 0.08, y: 6 },
+            { img: pines(120, '#7ab8a0', '#9ad0b8', 53, 50), scroll: 0.18, y: H - 120 },
+            { img: pines(110, '#3a8a5a', '#5aa878', 57, 50), scroll: 0.36, y: H - 110 },
+            { img: pines(80, '#1e6a3e', '#3a8a5a', 59, 40), scroll: 0.55, y: H - 80 }
+          ]
+        };
+      case 'desert':
+        return {
+          sky: gradient(['#3a9af0', '#9ad0f8', '#ffe8b8']),
+          layers: [
+            { img: sun(18, '#fff8d0', '#ffe080'), scroll: 0, y: 30, fixedX: 0.75 },
+            { img: clouds(70, 3, 61, '#ffffff', '#f0e0c8'), scroll: 0.08, y: 10 },
+            { img: hills(110, 70, 30, [2, 3, 5], '#f0c890', '#ffe0b0', 63), scroll: 0.2, y: H - 110 },
+            { img: hills(80, 50, 22, [3, 5, 8], '#d89a58', '#f0b878', 65), scroll: 0.42, y: H - 80 }
+          ]
+        };
+      case 'snow':
+        return {
+          sky: gradient(['#7ab0e8', '#c8e0f8', '#f4f8ff']),
+          layers: [
+            { img: sparkles(H, 90, 71, ['#ffffff', '#e8f4ff']), scroll: 0.12, y: 0 },
+            { img: mountains(130, '#a8c4e4', '#c8dcf4', '#ffffff', 73), scroll: 0.15, y: H - 130 },
+            { img: mountains(100, '#7894c0', '#98b0d8', '#f0f6ff', 75), scroll: 0.32, y: H - 100 },
+            { img: pines(70, '#2a5a5a', '#ffffff', 77, 30), scroll: 0.55, y: H - 70 }
+          ]
+        };
+      case 'volcano':
+        return {
+          sky: gradient(['#1a0808', '#4a1410', '#a83a10', '#ff8a30']),
+          layers: [
+            { img: sparkles(H, 60, 81, ['#ff8a30', '#ffc860', '#ff5a20']), scroll: 0.1, y: 0 },
+            { img: mountains(140, '#3a1414', '#7a2a1a', '#ff7a2a', 83), scroll: 0.18, y: H - 140 },
+            { img: mountains(100, '#240a0a', '#5a1a14', null, 85), scroll: 0.38, y: H - 100 }
+          ]
+        };
+      case 'night':
+        return {
+          sky: gradient(['#06061e', '#141448', '#2a3a70']),
+          layers: [
+            { img: sparkles(H, 120, 91, ['#ffffff', '#c8d8ff', '#fff0a0']), scroll: 0.03, y: 0 },
+            { img: sun(16, '#f4f0d8', '#c8c4b0'), scroll: 0, y: 26, fixedX: 0.2 },
+            { img: pines(110, '#1a2448', '#2a3a68', 93, 50), scroll: 0.2, y: H - 110 },
+            { img: pines(80, '#0e1430', '#1e2a50', 95, 40), scroll: 0.45, y: H - 80 }
           ]
         };
       case 'castle':

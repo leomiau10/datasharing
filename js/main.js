@@ -11,7 +11,7 @@
       this.score = 0;
       const s = G.Save.get();
       this.coins = s.coins || 0;
-      this.lives = s.lives || 3;
+      this.lives = s.lives || 5;
       this.form = 'small';
       this.level = null;
       this.levelIndex = 0;
@@ -130,8 +130,8 @@
         case 'gameover':
           if (In.justPressed('jump') || In.justPressed('start')) {
             this.go(() => {
-              this.lives = 3; this.coins = 0; this.score = 0; this.form = 'small'; this.checkpoints = {};
-              const st = G.Save.get(); st.lives = 3; st.coins = 0; G.Save.save();
+              this.lives = 5; this.coins = 0; this.score = 0; this.form = 'small'; this.checkpoints = {};
+              const st = G.Save.get(); st.lives = 5; st.coins = 0; G.Save.save();
               this.goMap();
             });
           }
@@ -260,8 +260,20 @@
     G.R.init(document.getElementById('game'));
     if (G.R3) G.R3.init();
     G.Input.bindTouch(document);
-    const dpad = document.getElementById('dpad');
-    if (dpad) G.Input.bindDpad(dpad);
+    const lzone = document.getElementById('lzone');
+    if (lzone) G.Input.bindStick(lzone, document.getElementById('stick'), document.getElementById('knob'));
+    const rzone = document.getElementById('rzone');
+    if (rzone) G.Input.bindActions(rzone);
+
+    // iOS Safari ignores user-scalable=no: block double-tap zoom, pinch and page scrolling.
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd < 400 && e.cancelable) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+    document.addEventListener('touchmove', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+    ['gesturestart', 'gesturechange', 'gestureend', 'dblclick'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
     G.game = new Game();
 
     const muteBtn = document.getElementById('mute');

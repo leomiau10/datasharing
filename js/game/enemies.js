@@ -6,7 +6,7 @@
   const TILE = 16;
 
   function isStomp(player, e) {
-    return player.vy > 0 && (player.y + player.h) <= e.y + e.h * 0.6 + 4;
+    return player.vy > 0 && (player.y + player.h) <= e.y + e.h * 0.6 + 7;
   }
 
   // Knock an enemy off screen (fireball / shell / star / bumped block).

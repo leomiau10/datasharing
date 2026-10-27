@@ -20,9 +20,14 @@ assert(Math.abs(p.y + p.h - groundTop) < 0.5 && p.grounded, 'player should rest 
 console.log('rest ok');
 
 // walk: capped at walking speed
-In.keyDown('right'); step(80);
+In.keyDown('right'); step(25);
 assert(p.vx > 1.3 && p.vx <= 1.55, 'walk speed ~1.5, got ' + p.vx);
 console.log('walk speed', p.vx.toFixed(2));
+
+// auto-run: keep holding the direction (no B) and the hero speeds up to a run
+step(70);
+assert(p.vx > 2.3, 'holding a direction should auto-run, got ' + p.vx);
+console.log('auto-run speed', p.vx.toFixed(2));
 
 // run: faster, and the run meter fills for a sprint
 In.keyDown('run'); step(150);

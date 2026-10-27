@@ -92,6 +92,11 @@
     dusk: { tempo: 0.14, root: 62, scale: MAJOR, prog: [5, 3, 0, 4], lead: 'square', seed: 12 },
     castle: { tempo: 0.13, root: 55, scale: MINOR, prog: [0, 0, 5, 4], lead: 'sawtooth', seed: 17 },
     map: { tempo: 0.16, root: 65, scale: MAJOR, prog: [0, 3, 0, 4], lead: 'triangle', seed: 21 },
+    forest: { tempo: 0.14, root: 62, scale: MAJOR, prog: [0, 5, 3, 4], lead: 'triangle', seed: 37 },
+    desert: { tempo: 0.13, root: 57, scale: [0, 1, 4, 5, 7, 8, 10], prog: [0, 1, 0, 5], lead: 'square', seed: 41 },
+    snow: { tempo: 0.15, root: 69, scale: MAJOR, prog: [0, 3, 5, 4], lead: 'triangle', seed: 43 },
+    volcano: { tempo: 0.11, root: 52, scale: MINOR, prog: [0, 6, 5, 4], lead: 'sawtooth', seed: 47 },
+    night: { tempo: 0.17, root: 59, scale: MINOR, prog: [0, 3, 0, 4], lead: 'triangle', seed: 53 },
     star: { tempo: 0.085, root: 67, scale: MAJOR, prog: [0, 4, 0, 4], lead: 'square', seed: 29 },
     boss: { tempo: 0.11, root: 50, scale: MINOR, prog: [0, 1, 0, 6], lead: 'sawtooth', seed: 31 }
   };

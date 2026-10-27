@@ -17,6 +17,13 @@ const out = process.argv[2] || 'tools';
   await page.waitForTimeout(1500);
   await page.screenshot({ path: out + '/shot-map.png' });
 
+  // Every world map
+  for (let w = 1; w < 4; w++) {
+    await page.evaluate((w) => { const g = window.GAME.game; g.trans = null; window.GAME.Save.setWorld(w, 1); g.goMap(); g.scene = 'map'; }, w);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: out + '/shot-map' + w + '.png' });
+  }
+
   // Each scene: level index + hero x position (tiles) + optional setup.
   const scenes = [
     { name: 'tip', level: 0, tile: 5 },
@@ -24,7 +31,12 @@ const out = process.argv[2] || 'tools';
     { name: 'cave', level: 1, tile: 60 },
     { name: 'sky', level: 2, tile: 30 },
     { name: 'dusk', level: 3, tile: 50 },
-    { name: 'boss', level: 5, tile: -12 }
+    { name: 'boss', level: 5, tile: -12 },
+    { name: 'forest', level: 6, tile: 40 },
+    { name: 'desert', level: 11, tile: 30 },
+    { name: 'snow', level: 16, tile: 30 },
+    { name: 'volcano', level: 18, tile: 40 },
+    { name: 'night', level: 8, tile: 30 }
   ];
   for (const sc of scenes) {
     await page.evaluate((sc) => {

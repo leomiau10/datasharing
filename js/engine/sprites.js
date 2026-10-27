@@ -249,6 +249,16 @@
       outline: '#5870b0', brick: '#f0b0c8', brickDk: '#b06080', brickHi: '#ffd8e4', seed: 37 },
     dusk: { grass: '#d0a838', grassHi: '#f4d870', grassDk: '#8a6a20', soil: '#8a4a50', soilDk: '#5e2a3a', soilHi: '#b0686c',
       outline: '#2a1020', brick: '#c07060', brickDk: '#7a3040', brickHi: '#e8a090', seed: 41 },
+    forest: { grass: '#3a9a3a', grassHi: '#6ad060', grassDk: '#1e6a24', soil: '#6a4a2a', soilDk: '#4a3018', soilHi: '#8a6a40',
+      outline: '#1a1008', brick: '#9a6a3a', brickDk: '#5a3a1a', brickHi: '#c89a60', seed: 61 },
+    desert: { grass: '#f0c860', grassHi: '#fff0a0', grassDk: '#c89a3a', soil: '#d89a50', soilDk: '#b0703a', soilHi: '#f0b870',
+      outline: '#5a3010', brick: '#e0a050', brickDk: '#9a5a20', brickHi: '#ffd090', seed: 67 },
+    snow: { grass: '#ffffff', grassHi: '#ffffff', grassDk: '#b8d8f0', soil: '#8ab0d8', soilDk: '#5a80b0', soilHi: '#b8d8f8',
+      outline: '#203a60', brick: '#a8c8e8', brickDk: '#5878a8', brickHi: '#e0f0ff', seed: 71 },
+    volcano: { grass: '#6a3a32', grassHi: '#a0503a', grassDk: '#3a2020', soil: '#3a2424', soilDk: '#241414', soilHi: '#5a3434',
+      outline: '#100606', brick: '#7a3a2a', brickDk: '#3a1410', brickHi: '#b05a3a', seed: 79 },
+    night: { grass: '#4a8a6a', grassHi: '#7ab89a', grassDk: '#2a5a4a', soil: '#3a3050', soilDk: '#241c38', soilHi: '#504470',
+      outline: '#0c0818', brick: '#5a4a7a', brickDk: '#2a2040', brickHi: '#8a7ab0', seed: 83 },
     castle: { grass: '#8a8a98', grassHi: '#bcbcc8', grassDk: '#5a5a68', soil: '#6a6a78', soilDk: '#42424e', soilHi: '#8c8c9a',
       outline: '#14141c', brick: '#7a5a6a', brickDk: '#3a2030', brickHi: '#a88898', seed: 53 }
   };
@@ -735,6 +745,27 @@
     return outline(c, OL);
   }
 
+  function makeCactus() {
+    const c = mk(14, 22), x = c.getContext('2d');
+    x.fillStyle = '#3a9a4a'; x.fillRect(5, 2, 5, 20); x.fillRect(1, 8, 3, 7); x.fillRect(1, 13, 5, 3); x.fillRect(11, 5, 3, 7); x.fillRect(9, 10, 4, 3);
+    disc(x, 7, 3, 2, '#3a9a4a');
+    x.fillStyle = '#7ad87a'; x.fillRect(6, 3, 1, 18); x.fillRect(2, 9, 1, 5);
+    x.fillStyle = '#ff8ab0'; x.fillRect(6, 0, 3, 2);
+    return outline(c, '#123a1a');
+  }
+  function makeSnowPine() {
+    const c = mk(18, 30), x = c.getContext('2d');
+    x.fillStyle = '#6a4a2a'; x.fillRect(8, 24, 3, 6);
+    for (let j = 0; j < 24; j++) {
+      const hw = 1 + Math.floor((j % 8) * 0.6 + j * 0.28);
+      x.fillStyle = '#2a6a4a'; x.fillRect(9 - hw, j, hw * 2, 1);
+      if (j % 8 < 2) { x.fillStyle = '#ffffff'; x.fillRect(9 - hw, j, hw * 2, 1); }
+    }
+    return outline(c, '#0e2a24');
+  }
+  const cactus = makeCactus();
+  const snowPine = makeSnowPine();
+
   const spiky = [makeSpiky(0), makeSpiky(1)];
   const bee = [makeBee(0), makeBee(1)];
   const hopper = [makeHopper(false), makeHopper(true)];
@@ -763,7 +794,7 @@
     cloud: cloud, bush: bush, hill: hill,
     spiky: spiky, bee: bee, hopper: hopper, boss: boss, heart: heart, cloudItem: cloudItem, gem: gem,
     medal: medal, medalFaded: medalFaded, lift: lift, sign: sign, flowerDecor: flowerDecor, tree: tree,
-    crystal: crystal, mapCastle: mapCastle
+    crystal: crystal, mapCastle: mapCastle, cactus: cactus, snowPine: snowPine
   };
   // Convenience aliases for the title/map screens.
   S.tGround = tilesets.overworld.groundM;

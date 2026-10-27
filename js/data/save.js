@@ -8,8 +8,9 @@
     cleared: {},   // { levelIndex: true }
     medals: {},    // { levelIndex: bitmask of the 3 medals }
     coins: 0,
-    lives: 3,
-    mapNode: 0     // current node on the world map
+    lives: 5,
+    mapNode: 0,    // current node on the world map
+    mapWorld: 0    // which world map the hero is on
   };
 
   function load() {
@@ -42,6 +43,7 @@
   function addMedals(index, mask) { state.medals[index] = (state.medals[index] || 0) | mask; save(); }
 
   function setNode(n) { state.mapNode = n; save(); }
+  function setWorld(w, n) { state.mapWorld = w; state.mapNode = n; save(); }
 
   function addCoins(n) { state.coins += n; save(); }
 
@@ -50,5 +52,5 @@
     save();
   }
 
-  G.Save = { get, save, markCleared, isCleared, medals, addMedals, setNode, addCoins, reset };
+  G.Save = { get, save, markCleared, isCleared, medals, addMedals, setNode, setWorld, addCoins, reset };
 })(window.GAME = window.GAME || {});

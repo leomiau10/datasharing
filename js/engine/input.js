@@ -85,50 +85,106 @@
     });
   }
 
-  // ----- Sliding d-pad: one touch zone; direction follows the finger as it drags -----
-  function bindDpad(zone) {
-    const DEAD = 0.22;
-    let activeId = null;
+  // ----- Floating stick: touch anywhere in the left zone; that point becomes the center -----
+  function bindStick(zone, base, knob) {
+    const RADIUS = 46;          // max knob travel (css px)
+    const DX = 14, DY = 26;     // thresholds: horizontal is light, vertical needs a firmer push
+    let id = null, ox = 0, oy = 0;
+    const dirs = ['left', 'right', 'up', 'down'];
 
-    function apply(e) {
+    function placeBase(x, y) {
       const r = zone.getBoundingClientRect();
-      const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
-      const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
+      base.style.left = (x - r.left) + 'px';
+      base.style.top = (y - r.top) + 'px';
+    }
+    function apply(x, y) {
+      let dx = x - ox, dy = y - oy;
       const want = {
-        left: nx < -DEAD,
-        right: nx > DEAD,
-        up: ny < -DEAD * 1.4,
-        down: ny > DEAD * 1.4
+        left: dx < -DX,
+        right: dx > DX,
+        up: dy < -DY && Math.abs(dy) > Math.abs(dx) * 0.7,
+        down: dy > DY && Math.abs(dy) > Math.abs(dx) * 0.7
       };
-      for (const k in want) {
-        if (want[k]) setDown(k); else setUp(k);
-        const el = zone.querySelector('[data-dir="' + k + '"]');
-        if (el) el.classList.toggle('held', want[k]);
-      }
+      dirs.forEach((k) => { if (want[k]) setDown(k); else setUp(k); });
+      const len = Math.hypot(dx, dy);
+      if (len > RADIUS) { dx = dx / len * RADIUS; dy = dy / len * RADIUS; }
+      knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
     }
     function end() {
-      activeId = null;
-      ['left', 'right', 'up', 'down'].forEach(function (k) {
-        setUp(k);
-        const el = zone.querySelector('[data-dir="' + k + '"]');
-        if (el) el.classList.remove('held');
-      });
+      id = null;
+      dirs.forEach(setUp);
+      knob.style.transform = 'translate(0px,0px)';
+      base.classList.remove('active');
+      base.style.left = ''; base.style.top = '';
     }
-
-    zone.addEventListener('pointerdown', function (e) {
-      activeId = e.pointerId;
-      try { zone.setPointerCapture(e.pointerId); } catch (err) {}
-      apply(e);
+    zone.addEventListener('pointerdown', (e) => {
+      if (id !== null) return;
+      id = e.pointerId;
+      try { zone.setPointerCapture(id); } catch (err) {}
+      ox = e.clientX; oy = e.clientY;
+      placeBase(ox, oy);
+      base.classList.add('active');
+      apply(ox, oy);
       G.Audio && G.Audio.resume();
       if (e.cancelable) e.preventDefault();
     });
-    zone.addEventListener('pointermove', function (e) {
-      if (e.pointerId === activeId) { apply(e); if (e.cancelable) e.preventDefault(); }
+    zone.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== id) return;
+      // drag the center along if the thumb wanders far, so direction changes stay quick
+      const dx = e.clientX - ox, dy = e.clientY - oy, len = Math.hypot(dx, dy);
+      if (len > RADIUS * 1.6) { ox = e.clientX - dx / len * RADIUS * 1.6; oy = e.clientY - dy / len * RADIUS * 1.6; placeBase(ox, oy); }
+      apply(e.clientX, e.clientY);
+      if (e.cancelable) e.preventDefault();
     });
-    zone.addEventListener('pointerup', function (e) { if (e.pointerId === activeId) end(); });
-    zone.addEventListener('pointercancel', function (e) { if (e.pointerId === activeId) end(); });
-    zone.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    zone.addEventListener('pointerup', (e) => { if (e.pointerId === id) end(); });
+    zone.addEventListener('pointercancel', (e) => { if (e.pointerId === id) end(); });
   }
 
-  G.Input = { state, down, justPressed, snapshot, bindTouch, bindDpad, keyDown: setDown, keyUp: setUp };
+  // ----- Action zone: buttons react to where each thumb is, so you can roll between them -----
+  function bindActions(zone) {
+    const btns = Array.prototype.slice.call(zone.querySelectorAll('[data-act]'));
+    const pointers = new Map(); // pointerId -> {x, y}
+    function hitsFor(x, y) {
+      const hits = [];
+      let best = null, bestD = Infinity;
+      for (const b of btns) {
+        const r = b.getBoundingClientRect();
+        const d = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2)) / (r.width / 2);
+        if (d < 1.12) hits.push(b);
+        if (d < bestD) { bestD = d; best = b; }
+      }
+      if (!hits.length && best && bestD < 1.9) hits.push(best);
+      return hits;
+    }
+    function refresh() {
+      const on = new Set();
+      pointers.forEach((p) => hitsFor(p.x, p.y).forEach((b) => on.add(b)));
+      for (const b of btns) {
+        const k = b.getAttribute('data-act');
+        if (on.has(b)) setDown(k); else setUp(k);
+        b.classList.toggle('held', on.has(b));
+      }
+    }
+    zone.addEventListener('pointerdown', (e) => {
+      try { zone.setPointerCapture(e.pointerId); } catch (err) {}
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      refresh();
+      G.Audio && G.Audio.resume();
+      if (e.cancelable) e.preventDefault();
+    });
+    zone.addEventListener('pointermove', (e) => {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      refresh();
+      if (e.cancelable) e.preventDefault();
+    });
+    const up = (e) => { if (pointers.delete(e.pointerId)) refresh(); };
+    zone.addEventListener('pointerup', up);
+    zone.addEventListener('pointercancel', up);
+  }
+
+  // Auto-run: holding a direction for a moment switches to running without pressing B.
+  const settings = { autoRun: true };
+
+  G.Input = { state, down, justPressed, snapshot, bindTouch, bindStick, bindActions, settings, keyDown: setDown, keyUp: setUp };
 })(window.GAME = window.GAME || {});

@@ -17,6 +17,7 @@
       this.pixelW = this.w * TILE;
       this.pixelH = this.h * TILE;
       this.groundY = (def.groundRow || 12) * TILE;
+      this.slippery = this.theme === 'snow';
 
       this.grid = [];
       this.questionState = {};
@@ -46,7 +47,7 @@
       this.cleared = false;
       this.failed = false;
       this.outTimer = 0;
-      this.time = 300;
+      this.time = 400;
       this.timeAcc = 0;
       this.age = 0;
       this.bg = new G.Background(this.theme);
@@ -85,6 +86,7 @@
         case 'hopper': this.enemies.push(new G.Hopper(x, y)); break;
         case 'boss':
           this.enemies.push(new G.Boss(x, y));
+          this.enemies[this.enemies.length - 1].hp = this.def.bossHp || 3;
           this.hasBoss = true;
           this.arenaX = (c - 17) * TILE;
           break;
@@ -115,8 +117,9 @@
       const d = [];
       const S = G.Sprites, T = G.Tiles.T;
       const rnd = G.Gfx.rng(this.w * 13 + 7);
-      const green = this.theme === 'overworld' || this.theme === 'dusk';
-      if (!green && this.theme !== 'cave') return d;
+      const green = ['overworld', 'dusk', 'forest', 'night'].indexOf(this.theme) >= 0;
+      const special = { desert: S.cactus, snow: S.snowPine }[this.theme];
+      if (!green && !special && this.theme !== 'cave') return d;
       for (let c = 3; c < this.w - 3; c++) {
         let r = 1;
         while (r < this.h && this.tileAt(c, r) === T.EMPTY) r++;
@@ -127,6 +130,9 @@
           if (k < 0.05 && this.tileAt(c + 1, r) === T.GROUND) { d.push({ img: S.tree, x: c * TILE - 6, y: top - S.tree.height + 1 }); c += 3; }
           else if (k < 0.13) { d.push({ img: S.bush, x: c * TILE - 8, y: top - S.bush.height + 1 }); c += 2; }
           else if (k < 0.28) d.push({ img: S.flowerDecor[Math.floor(rnd() * 3)], x: c * TILE + 3, y: top - 9 });
+        } else if (special) {
+          if (k < 0.1) { d.push({ img: special, x: c * TILE - 1, y: top - special.height + 1 }); c += 2; }
+          else if (k < 0.16 && this.theme === 'snow') d.push({ img: S.flowerDecor[1], x: c * TILE + 3, y: top - 9 });
         } else if (k < 0.12) {
           d.push({ img: S.crystal, x: c * TILE + 2, y: top - S.crystal.height + 1 });
           c += 1;
@@ -322,7 +328,8 @@
       for (const e of this.enemies) e.update(this);
       for (const e of this.enemies) {
         if (e.dying || !e.alive || e.carried) continue;
-        if (!G.Physics.aabb(player, e)) continue;
+        // forgiving hitbox: grazing an enemy's edge doesn't count
+        if (!G.Physics.aabb(player, { x: e.x + 2, y: e.y + 2, w: e.w - 4, h: e.h - 2 })) continue;
         if (player.state !== 'play') break;
         if (player.star > 0 && !e.boss) {
           G.launchEnemy(e);

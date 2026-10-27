@@ -1,5 +1,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+#stage, #stage * { touch-action: none; }
+
 html, body {
   width: 100%;
   height: 100%;
@@ -67,61 +69,68 @@ html, body {
 }
 .btn.held { background: rgba(255, 255, 255, 0.45); transform: scale(0.92); }
 
-/* D-pad bottom-left: a single touch zone, thumb can slide between directions */
-.pad {
+/* Left zone: floating stick. The base shows at its rest spot and jumps to the thumb on touch. */
+#lzone {
   position: absolute;
-  left: calc(16px + env(safe-area-inset-left));
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  width: 168px;
-  height: 168px;
+  left: 0; top: 64px; bottom: 0;
+  width: 42%;
   pointer-events: auto;
   touch-action: none;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 70%, transparent 71%);
 }
-.dir {
+.stick {
   position: absolute;
-  width: 56px; height: 56px;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 22px; font-weight: 800;
-  background: rgba(255, 255, 255, 0.16);
+  left: calc(96px + env(safe-area-inset-left));
+  top: calc(100% - 100px - env(safe-area-inset-bottom));
+  width: 130px; height: 130px;
+  margin: -65px 0 0 -65px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
   border: 2px solid rgba(255, 255, 255, 0.35);
   pointer-events: none;
 }
-.dir.held { background: rgba(255, 255, 255, 0.45); }
-.dir.up    { left: 56px; top: 0; border-radius: 12px 12px 0 0; }
-.dir.down  { left: 56px; top: 112px; border-radius: 0 0 12px 12px; }
-.dir.left  { left: 0; top: 56px; border-radius: 12px 0 0 12px; }
-.dir.right { left: 112px; top: 56px; border-radius: 0 12px 12px 0; }
-
-/* Action buttons bottom-right */
-.actions {
+.stick.active { background: rgba(255, 255, 255, 0.2); }
+.knob {
   position: absolute;
-  right: calc(16px + env(safe-area-inset-right));
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  width: 200px;
-  height: 130px;
+  left: 50%; top: 50%;
+  width: 58px; height: 58px;
+  margin: -29px 0 0 -29px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  border: 2px solid rgba(255, 255, 255, 0.7);
 }
+
+/* Right zone: action buttons */
+#rzone {
+  position: absolute;
+  right: 0; top: 64px; bottom: 0;
+  width: 42%;
+  pointer-events: auto;
+  touch-action: none;
+}
+#rzone .btn { pointer-events: none; }
 .btn.jump {
-  width: 84px; height: 84px;
-  right: 0; bottom: 0;
-  background: rgba(229, 37, 33, 0.35);
-  border-color: rgba(255, 180, 180, 0.6);
-  font-size: 32px;
-}
-.btn.spin {
-  width: 62px; height: 62px;
-  right: 12px; bottom: 96px;
-  background: rgba(40, 180, 90, 0.35);
-  border-color: rgba(180, 255, 200, 0.6);
-  font-size: 26px;
+  width: 96px; height: 96px;
+  right: calc(18px + env(safe-area-inset-right));
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  background: rgba(229, 37, 33, 0.38);
+  border-color: rgba(255, 180, 180, 0.7);
+  font-size: 34px;
 }
 .btn.run {
+  width: 82px; height: 82px;
+  right: calc(118px + env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  background: rgba(40, 120, 220, 0.38);
+  border-color: rgba(180, 200, 255, 0.7);
+  font-size: 30px;
+}
+.btn.spin {
   width: 70px; height: 70px;
-  right: 90px; bottom: 30px;
-  background: rgba(40, 120, 220, 0.35);
-  border-color: rgba(180, 200, 255, 0.6);
-  font-size: 28px;
+  right: calc(30px + env(safe-area-inset-right));
+  bottom: calc(118px + env(safe-area-inset-bottom));
+  background: rgba(40, 180, 90, 0.38);
+  border-color: rgba(180, 255, 200, 0.7);
+  font-size: 26px;
 }
 
 /* Center START button (also used to pause) */

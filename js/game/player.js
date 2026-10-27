@@ -30,6 +30,8 @@
       this.wallTimer = 0;
       this.lastWall = 0;
       this.ctrlLock = 0;
+      this.holdTime = 0;
+      this.lastDir = 0;
       this.gliding = false;
       this.carry = null;
       this.ride = null;
@@ -100,7 +102,7 @@
           if (col.down || plat) {
             G.Audio.sfx.pound();
             const keepGoing = !plat && level.poundImpact(this);
-            if (!keepGoing) { this.pound = null; this.grounded = true; this.coyote = 6; this.chain = 0; this.vy = 0; }
+            if (!keepGoing) { this.pound = null; this.grounded = true; this.coyote = 9; this.chain = 0; this.vy = 0; }
           }
         }
         this.checkHazards(level);
@@ -110,7 +112,10 @@
 
       let dir = (In.down('right') ? 1 : 0) - (In.down('left') ? 1 : 0);
       if (this.ctrlLock > 0) { this.ctrlLock--; dir = 0; }
-      const run = In.down('run');
+      // auto-run: holding one direction for half a second switches to running
+      if (dir !== 0 && dir === this.lastDir) this.holdTime++; else this.holdTime = 0;
+      this.lastDir = dir;
+      const run = In.down('run') || (In.settings.autoRun && this.holdTime > 30 && !this.carry);
 
       // crouch (big forms only)
       const wantCrouch = this.big && In.down('down') && this.grounded && !this.carry;
@@ -127,14 +132,16 @@
           if ((G.game.animFrame & 3) === 0) level.particles.push(new G.Puff(this.x + this.w / 2, this.y + this.h - 2));
         } else {
           this.skidding = false;
-          const a = this.grounded ? (run ? 0.1 : 0.14) : 0.09;
+          let a = this.grounded ? (run ? 0.1 : 0.14) : 0.09;
+          if (this.grounded && level.slippery) a *= 0.55;
           if (Math.abs(this.vx) < maxSpeed || this.vx * dir < 0) this.vx += dir * a;
           else if (this.grounded) this.vx -= Math.sign(this.vx) * 0.08;
         }
         this.facing = this.skidding ? Math.sign(this.vx) || dir : dir;
       } else {
         this.skidding = false;
-        const f = this.grounded ? (this.crouching ? 0.2 : 0.12) : 0.02;
+        let f = this.grounded ? (this.crouching ? 0.2 : 0.12) : 0.02;
+        if (this.grounded && level.slippery) f *= 0.25;
         if (this.vx > 0) this.vx = Math.max(0, this.vx - f);
         else if (this.vx < 0) this.vx = Math.min(0, this.vx + f);
       }
@@ -145,7 +152,7 @@
 
       // ---- jumps: buffered + coyote; spin jump on Y; wall jump off a wall slide
       if (In.justPressed('jump') || In.justPressed('spin')) {
-        this.jumpBuffer = 8;
+        this.jumpBuffer = 12;
         this.bufferSpin = In.justPressed('spin');
       } else if (this.jumpBuffer > 0) this.jumpBuffer--;
       if (this.coyote > 0) this.coyote--;
@@ -191,7 +198,7 @@
       const plat = this.landOnPlatforms(level, prevBottom);
       this.grounded = col.down || plat;
       if (this.grounded) {
-        this.coyote = 6;
+        this.coyote = 9;
         this.chain = 0;
         this.spinning = false;
         if (!wasGrounded && this.vy === 0) level.particles.push(new G.Puff(this.x + this.w / 2, this.y + this.h - 2));
@@ -269,7 +276,7 @@
       this.h = SMALL_H;
       this.crouching = false;
       this.form = 'small';
-      this.invuln = 90;
+      this.invuln = 120;
     }
 
     startWin(noFlag) {
