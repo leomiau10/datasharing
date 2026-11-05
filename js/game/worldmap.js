@@ -546,7 +546,7 @@
       // header: lives + level name
       const nd = this.nodes[this.current];
       R.spriteS(S.lifeIcon, o.x, 3);
-      T.drawShadow('x' + this.game.lives, o.x + 16, 6, '#fff', 1, '#3a2a1a');
+      T.drawShadow('x' + this.game.lives, o.x + 20, 6, '#fff', 1, '#3a2a1a');
       let name;
       const target = this.dest(nd, this.world);
       if (target != null) name = (target < this.world ? 'VOLVER A ' : 'IR A ') + G.Worlds[target].name;

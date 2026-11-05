@@ -34,35 +34,29 @@ function encodePNG(w, h, rgba) {
   return Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', idat), chunk('IEND', Buffer.alloc(0))]);
 }
 
+// Same pixel art as the in-game hero (js/engine/sprites.js, small Pip).
 const heroPal = {
-  r: [229, 37, 33], R: [160, 21, 16], s: [252, 176, 133], S: [200, 112, 58],
-  o: [26, 79, 208], O: [10, 47, 144], b: [90, 52, 16], k: [26, 26, 26], w: [255, 255, 255],
-  '.': null
+  y: [255, 216, 74], Y: [216, 154, 28], t: [37, 181, 164], T: [23, 122, 116], s: [255, 208, 164],
+  k: [42, 26, 58], w: [255, 255, 255], r: [255, 154, 138], n: [244, 160, 128], m: [200, 74, 74],
+  o: [242, 138, 46], l: [255, 192, 112], b: [110, 60, 30], '.': null
 };
 const hero = [
-  '....rrrr....',
-  '...rrrrrrr..',
-  '..bbbsssss..',
-  '..bsbssssS..',
-  '..bsbbsssS..',
-  '..bbssssS...',
-  '...ssssS....',
-  '...rrrrr....',
-  '..rrorror...',
-  '.rrroooorr..',
-  'srrooooorrs.',
-  'ssrooooorss.',
-  '..oooooooo..',
-  '..oooooooo..',
-  '..soooooos..',
-  '..ssoooss...',
-  '..oooooooo..',
-  '..oooooooo..',
-  '..ooo..ooo..',
-  '..ooo..ooo..',
-  '..oo....oo..',
-  '.bbb....bbb.',
-  '.kkk....kkk.'
+  '.......yy.......',
+  '......yYYy......',
+  '....tttttttt....',
+  '...tttttttttt...',
+  '..tTTTTTTTTTTt..',
+  '.ssssskwssskwss.',
+  '.ssssskkssskkss.',
+  '.ssrrsssnnssrrs.',
+  '..sssssssmmss...',
+  '...oooooooooo...',
+  '.sooollllllooos.',
+  '.soooooooooooos.',
+  '..oooooooooooo..',
+  '...oooooooooo...',
+  '...bbb....bbb...',
+  '..bbbb....bbbb..'
 ];
 
 function makeIcon(size) {

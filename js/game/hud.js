@@ -31,7 +31,7 @@
     const y = 5;
     R.rectS(0, 0, R.BASE_W, 17, 'rgba(0,0,0,0.28)');
     R.spriteS(S.lifeIcon, 4, 2);
-    T.drawShadow('x' + pad(game.lives, 1), 20, y, '#fff', 1, '#000');
+    T.drawShadow('x' + pad(game.lives, 1), 24, y, '#fff', 1, '#000');
     R.spriteS(S.coin[0], 44, 2);
     T.drawShadow('x' + pad(game.coins, 2), 56, y, '#ffe060', 1, '#000');
     T.drawShadow(pad(game.score, 6), 86, y, '#fff', 1, '#000');

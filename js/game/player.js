@@ -483,11 +483,16 @@
         img = set.jump;
       } else if (this.skidding) {
         img = set.idle;
-      } else if (moving || this.state === 'win') {
+      } else if (this.state === 'win') {
+        img = (G.game.animFrame >> 3) & 1 ? set.jump : set.walk; // cheering with arms up
+      } else if (moving) {
         img = walkFrame ? set.walk : set.idle;
       } else {
         img = set.idle;
       }
+      // blink every few seconds
+      const blinking = (G.game.animFrame % 170) < 7;
+      if (blinking && img === set.idle && set.blink) img = set.blink;
       if (this.star > 0) img = G.Gfx.tint(img, STAR_COLORS[(G.game.animFrame >> 2) % STAR_COLORS.length]);
       if (this.mount && this.state !== 'death') {
         // Rolo underneath, rider sitting in the saddle
@@ -500,7 +505,7 @@
         const bottom = this.y + this.h + 1;
         const bw = b.width * this.sx, bh = b.height * this.sy;
         R.spriteXf(b, this.x + this.w / 2 - bw / 2, bottom - bh, bw, bh, this.facing < 0);
-        const rider = !this.grounded ? set.jump : set.idle;
+        const rider = !this.grounded ? set.jump : ((G.game.animFrame % 170) < 7 && set.blink ? set.blink : set.idle);
         const rimg = this.star > 0 ? G.Gfx.tint(rider, STAR_COLORS[(G.game.animFrame >> 2) % STAR_COLORS.length]) : rider;
         const seat = bottom - bh + 5;
         R.spriteXf(rimg, this.x + this.w / 2 - rimg.width / 2 - this.facing * 2, seat - rimg.height * this.sy, rimg.width, rimg.height * this.sy, this.facing < 0);

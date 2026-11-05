@@ -65,81 +65,140 @@
   const OL = '#1c1024';
 
   // ---------------------------------------------------------------- hero "Pip"
+  // Chubby and cheerful: wool beanie with a pom-pom, rosy cheeks, button nose, big eyes,
+  // a round belly in a striped sweater and stubby legs (original design).
   const heroPalNormal = {
-    t: '#25b5a4', T: '#177a74', y: '#ffd84a', Y: '#d89a1c', s: '#ffd0a4', S: '#e29a6c',
-    k: '#2a1a3a', o: '#f28a2e', O: '#b8501a', b: '#6e3c1e'
+    y: '#ffd84a', Y: '#d89a1c', t: '#25b5a4', T: '#177a74', s: '#ffd0a4', k: '#2a1a3a', w: '#ffffff',
+    r: '#ff9a8a', n: '#f4a080', m: '#c84a4a', o: '#f28a2e', l: '#ffc070', b: '#6e3c1e'
   };
   const heroPalFire = {
-    t: '#e8403a', T: '#a02020', y: '#ffd84a', Y: '#d89a1c', s: '#ffd0a4', S: '#e29a6c',
-    k: '#2a1a3a', o: '#f6f6fa', O: '#b4b4c8', b: '#6e3c1e'
+    y: '#ffd84a', Y: '#d89a1c', t: '#e8403a', T: '#a02020', s: '#ffd0a4', k: '#2a1a3a', w: '#ffffff',
+    r: '#ff9a8a', n: '#f4a080', m: '#c84a4a', o: '#f6f6fa', l: '#ff6a5a', b: '#6e3c1e'
+  };
+  const heroPalWind = {
+    y: '#5ab0ff', Y: '#2a70c0', t: '#ffffff', T: '#a8c8f0', s: '#ffd0a4', k: '#2a1a3a', w: '#ffffff',
+    r: '#ff9a8a', n: '#f4a080', m: '#c84a4a', o: '#7ac8ff', l: '#d8f0ff', b: '#6e3c1e'
   };
 
-  const H_IDLE = [
-    '....yyyy....',
-    '....yYYy....',
-    '...tttttt...',
-    '..tttttttt..',
-    '..tttttttT..',
-    '..ssssssss..',
-    '.ssksssskss.',
-    '.ssksssskss.',
-    '.sssssssssS.',
-    '..ssSSSSss..',
-    '..yyyyyyyy..',
-    '.ooooooooOo.',
-    '.sooooooooS.',
-    '..oooOOooo..',
-    '..bbb..bbb..',
-    '.bbbb..bbbb.'
+  // Small Pip, 16x16: big head, round tummy.
+  const SMALL_HEAD = [
+    '.......yy.......',
+    '......yYYy......',
+    '....tttttttt....',
+    '...tttttttttt...',
+    '..tTTTTTTTTTTt..',
+    '.ssssskwssskwss.',
+    '.ssssskkssskkss.',
+    '.ssrrsssnnssrrs.',
+    '..sssssssmmss...'
   ];
-  const H_WALK = H_IDLE.slice(0, 13).concat([
-    '..ooo..ooo..',
-    '.bbb....bbb.',
-    'bbb......bbb'
+  const S_IDLE = SMALL_HEAD.concat([
+    '...oooooooooo...',
+    '.sooollllllooos.',
+    '.soooooooooooos.',
+    '..oooooooooooo..',
+    '...oooooooooo...',
+    '...bbb....bbb...',
+    '..bbbb....bbbb..'
   ]);
-  const H_JUMP = H_IDLE.slice(0, 10).concat([
-    's.yyyyyyyy.s',
-    'soooooooooos',
-    '.oooooooooo.',
-    '..oooOOooo..',
-    '.bbb....bbb.',
-    'bbbb....bbbb'
+  const S_WALK = S_IDLE.slice(0, 14).concat([
+    '..bbb......bbb..',
+    '.bbbb......bbbb.'
+  ]);
+  const S_JUMP = SMALL_HEAD.concat([
+    's..oooooooooo..s',
+    '..ooollllllooo..',
+    '..oooooooooooo..',
+    '..oooooooooooo..',
+    '...oooooooooo...',
+    '..bbb......bbb..',
+    '.bbb........bbb.'
   ]);
 
-  // Grow a small sprite into a tall one: stretch the tunic, then add a belt and legs so it reads as a body.
-  function bigOf(rows, torsoIdx, handsIdx) {
-    const head = rows.slice(0, 11);
-    const A = rows[torsoIdx], H = rows[handsIdx];
-    const BELT = '.OOOOOOOOOO.';
-    const LEG = '..ooo..ooo..';
-    const feet = rows.slice(13);
-    return head.concat([A, A, A, A, H, A, A, A, BELT, LEG, LEG, LEG], feet);
+  // Big Pip, 16x26: same face, a much rounder belly with stripes.
+  const BIG_HEAD = [
+    '.......yy.......',
+    '......yYYy......',
+    '....tttttttt....',
+    '...tttttttttt...',
+    '..tttttttttttt..',
+    '..tTTTTTTTTTTt..',
+    '..ssssssssssss..',
+    '.ssssskwssskwss.',
+    '.ssssskkssskkss.',
+    '.ssrrsssnnssrrs.',
+    '..sssssssmmss...'
+  ];
+  const BIG_BELLY = [
+    '....oooooooo....',
+    '...oooooooooo...',
+    '..oooooooooooo..',
+    '.oolllllllllloo.',
+    'soooooooooooooos',
+    'soooooooooooooos',
+    '.oolllllllllloo.',
+    '.oooooooooooooo.',
+    '.oooooooooooooo.',
+    '..oolllllllloo..',
+    '...oooooooooo...'
+  ];
+  const B_IDLE = BIG_HEAD.concat(BIG_BELLY, [
+    '....bbb..bbb....',
+    '...bbbb..bbbb...',
+    '..bbbbb..bbbbb..',
+    '..bbbbb..bbbbb..'
+  ]);
+  const B_WALK = BIG_HEAD.concat(BIG_BELLY, [
+    '...bbb....bbb...',
+    '..bbb......bbb..',
+    '.bbbb......bbbb.',
+    '.bbbb......bbbb.'
+  ]);
+  const B_JUMP = BIG_HEAD.concat([
+    's...oooooooo...s',
+    's..oooooooooo..s',
+    '..oooooooooooo..',
+    '.oolllllllllloo.',
+    '.oooooooooooooo.',
+    '.oooooooooooooo.',
+    '.oolllllllllloo.',
+    '.oooooooooooooo.',
+    '.oooooooooooooo.',
+    '..oolllllllloo..',
+    '...oooooooooo...',
+    '...bbb....bbb...',
+    '..bbb......bbb..',
+    '.bbb........bbb.',
+    '.bbb........bbb.'
+  ]);
+
+  // Eyes closed: the top half of each eye becomes skin, leaving a lash line.
+  function blinkOf(rows, eyeRow) {
+    return rows.map(function (r, i) { return i === eyeRow ? r.replace(/kw/g, 'ss') : r; });
   }
 
   function buildHero(pal) {
     return {
       small: {
-        idle: bake(H_IDLE, pal, OL),
-        walk: bake(H_WALK, pal, OL),
-        jump: bake(H_JUMP, pal, OL)
+        idle: bake(S_IDLE, pal, OL),
+        walk: bake(S_WALK, pal, OL),
+        jump: bake(S_JUMP, pal, OL),
+        blink: bake(blinkOf(S_IDLE, 5), pal, OL)
       },
       big: {
-        idle: bake(bigOf(H_IDLE, 11, 12), pal, OL),
-        walk: bake(bigOf(H_WALK, 11, 12), pal, OL),
-        jump: bake(bigOf(H_JUMP, 12, 12), pal, OL)
+        idle: bake(B_IDLE, pal, OL),
+        walk: bake(B_WALK, pal, OL),
+        jump: bake(B_JUMP, pal, OL),
+        blink: bake(blinkOf(B_IDLE, 7), pal, OL)
       }
     };
   }
-  const heroPalWind = {
-    t: '#ffffff', T: '#a8c8f0', y: '#5ab0ff', Y: '#2a70c0', s: '#ffd0a4', S: '#e29a6c',
-    k: '#2a1a3a', o: '#7ac8ff', O: '#2a78c8', b: '#6e3c1e'
-  };
   const heroN = buildHero(heroPalNormal);
   const heroF = buildHero(heroPalFire);
   const heroW = buildHero(heroPalWind);
   const heroSets = { small: heroN.small, big: heroN.big, fire: heroF.big, cloud: heroW.big };
   const heroCrouch = { big: heroN.small.idle, fire: heroF.small.idle, cloud: heroW.small.idle };
-  const lifeIcon = bake(H_IDLE.slice(0, 10), heroPalNormal, OL);
+  const lifeIcon = bake(SMALL_HEAD, heroPalNormal, OL);
 
   // ---------------------------------------------------------------- enemies
   const blobPal = { p: '#8a4fd0', P: '#5e2fa0', L: '#c9a0f0', w: '#ffffff', k: '#1a1030', f: '#3a2060' };
