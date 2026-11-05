@@ -5,6 +5,7 @@
   const STEP = 1 / 60;
   const IRIS_FRAMES = 28;
   const FINAL_LEVEL = 20;
+  G.VERSION = '10'; // shown on the title screen; matches the service worker cache name
 
   class Game {
     constructor() {
@@ -302,6 +303,7 @@
       ];
       R.rectS(20, 104, R.BASE_W - 40, 40, 'rgba(0,0,0,0.35)');
       help.forEach((l, i) => T.drawCenterShadow(l, 109 + i * 11, '#dde', 1, '#000'));
+      T.drawShadow('VERSION ' + G.VERSION, 6, 6, '#fff', 1, '#000');
     }
 
     renderGameOver() {
@@ -372,7 +374,19 @@
     window.addEventListener('pointerdown', kick);
     window.addEventListener('keydown', kick);
 
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+    if ('serviceWorker' in navigator) {
+      // Check for a new version on every launch; when it takes over, reload once to show it.
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+        .then((reg) => reg.update())
+        .catch(() => {});
+      const hadController = !!navigator.serviceWorker.controller;
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController || reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    }
     requestAnimationFrame(loop);
   }
 

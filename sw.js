@@ -1,5 +1,6 @@
 // Service worker: network-first (so updates reach the phone), cache fallback for offline play.
-const CACHE = 'pip-quest-v9';
+// Keep CACHE in sync with G.VERSION in js/main.js.
+const CACHE = 'pip-quest-v10';
 const ASSETS = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './vendor/three.module.min.js',
@@ -24,7 +25,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    fetch(e.request).then((res) => {
+    // no-cache: always revalidate with the server, so GitHub Pages' 10-minute HTTP cache can't serve old files
+    fetch(e.request, { cache: 'no-cache' }).then((res) => {
       const copy = res.clone();
       caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
       return res;
