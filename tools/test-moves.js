@@ -178,3 +178,46 @@ G.Levels.forEach((def, i) => {
 });
 console.log('level data ok');
 console.log('\nMOVES TESTS PASSED');
+
+// ---- Rolo the beetle: mount, double jump, charge, armor, takes a hit
+{
+  const L = makeLevel(['  S R           p        g    ']);
+  const p = L.player;
+  run(L, 5);
+  In.keyDown('right'); run(L, 40); In.keyUp('right');
+  assert(p.mount, 'touching Rolo mounts him');
+  assert(p.h === 28, 'rider hitbox while mounted');
+  run(L, 20);
+  In.keyDown('jump'); run(L, 8); In.keyUp('jump'); run(L, 6);
+  const vyBefore = p.vy;
+  In.keyDown('jump'); run(L, 2); In.keyUp('jump');
+  assert(p.usedDouble && p.vy < vyBefore && p.vy < -3, 'A in mid-air gives a wing double jump');
+  run(L, 60);
+  // armored stomp on a Thornback
+  const sp = L.enemies.find((e) => e.spiky);
+  sp.speed = 0;
+  p.x = sp.x; p.y = sp.y - p.h - 2; p.vy = 3; p.invuln = 0;
+  run(L, 6);
+  assert(sp.dying && !L.failed && p.mount, 'riding Rolo lets you stomp spiky enemies');
+  run(L, 40);
+  // charge into a Blob
+  const b = L.enemies.find((e) => e instanceof G.Blob);
+  p.x = b.x - 40; p.y = b.y + b.h - p.h; p.vx = 0; p.facing = 1;
+  run(L, 2);
+  In.keyDown('run'); run(L, 2); In.keyUp('run');
+  run(L, 20);
+  assert(b.dying, 'B charge launches enemies');
+  // a hit knocks you off; Rolo runs away and can be caught again
+  L.hurtPlayer();
+  assert(!p.mount && !L.failed && L.mounts[0].state === 'runaway', 'a hit costs Rolo, not a life');
+  // dismount by choice with Y
+  const m = L.mounts[0];
+  m.state = 'idle'; m.grace = 0; p.invuln = 0;
+  p.x = m.x; p.y = m.y + m.h - p.h; run(L, 3);
+  assert(p.mount, 'can re-mount Rolo');
+  In.keyDown('spin'); run(L, 2); In.keyUp('spin');
+  assert(!p.mount && p.vy < 0 && m.state === 'idle', 'Y hops off and leaves Rolo waiting');
+  console.log('Rolo mount ok');
+  releaseAll();
+}
+console.log('MOUNT TESTS PASSED');

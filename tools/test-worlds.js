@@ -12,10 +12,11 @@ G.Worlds.forEach((w, wi) => {
   w.nodes.forEach((n, i) => {
     assert(walkable.has(at(n.x, n.y)), w.name + ' node ' + i + ' is not on land (' + at(n.x, n.y) + ')');
     if (n.level != null) { assert(seen[n.level] == null, 'level ' + n.level + ' on two nodes'); seen[n.level] = wi; }
-    if (n.warp) {
-      const t = G.Worlds[wi + n.warp];
-      assert(t, w.name + ' warp ' + n.warp + ' leads nowhere');
-      assert(t.nodes.some((m) => m.warp === -n.warp), t.name + ' has no matching warp back');
+    const dest = (m, k) => (m.warpTo != null ? m.warpTo : (m.warp ? k + m.warp : null));
+    if (dest(n, wi) != null) {
+      const ti = dest(n, wi), t = G.Worlds[ti];
+      assert(t, w.name + ' warp leads nowhere');
+      assert(t.nodes.some((m) => dest(m, ti) === wi), t.name + ' has no matching warp back to ' + w.name);
     }
   });
   w.edges.forEach((e, k) => {

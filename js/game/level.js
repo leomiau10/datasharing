@@ -18,6 +18,8 @@
       this.pixelH = this.h * TILE;
       this.groundY = (def.groundRow || 12) * TILE;
       this.slippery = this.theme === 'snow';
+      this.water = !!def.water;
+      this.currents = [];
 
       this.grid = [];
       this.questionState = {};
@@ -27,6 +29,7 @@
       this.shots = [];
       this.particles = [];
       this.platforms = [];
+      this.mounts = [];
       this.signs = [];
       this.tip = null;
       this.medalCount = 0;
@@ -44,6 +47,11 @@
       if (startX != null) this.playerStart.x = startX;
 
       this.player = new G.Player(this.playerStart.x, this.playerStart.y, game.form);
+      if (game.hasMount && !this.water) {
+        const m = new G.Mount(this.player.x, this.playerStart.y);
+        this.mounts.push(m);
+        this.player.mountOn(m);
+      }
       this.cleared = false;
       this.failed = false;
       this.outTimer = 0;
@@ -65,6 +73,7 @@
         for (let c = 0; c < this.w; c++) {
           const ch = row[c] || ' ';
           this.grid[r][c] = Tiles.CHAR[ch] != null ? Tiles.CHAR[ch] : Tiles.T.EMPTY;
+          if (ch === '>' || ch === '<') this.currents.push([c, r, ch === '>' ? 1 : -1]);
           const sp = Tiles.SPAWN[ch];
           if (sp) {
             this.grid[r][c] = Tiles.T.EMPTY;
@@ -95,6 +104,10 @@
           this.items.push(new G.Medal(x, y, idx, !!(this.medalsHad & (1 << idx))));
           break;
         }
+        case 'mount': this.mounts.push(new G.Mount(x, y)); break;
+        case 'fish': this.enemies.push(new G.Fish(x, y)); break;
+        case 'secret_exit': this.items.push(new G.SecretFlag(x, y)); break;
+        case 'jelly': this.enemies.push(new G.Jelly(x, y)); break;
         case 'plat_h': this.platforms.push(new G.MovingPlatform(x, y, 'h')); break;
         case 'plat_v': this.platforms.push(new G.MovingPlatform(x, y, 'v')); break;
         case 'sign': this.signs.push({ x: x, y: y, text: (this.def.tips || [])[this.signs.length] || '' }); break;
@@ -118,7 +131,7 @@
       const S = G.Sprites, T = G.Tiles.T;
       const rnd = G.Gfx.rng(this.w * 13 + 7);
       const green = ['overworld', 'dusk', 'forest', 'night'].indexOf(this.theme) >= 0;
-      const special = { desert: S.cactus, snow: S.snowPine }[this.theme];
+      const special = { desert: S.cactus, snow: S.snowPine, water: S.kelp }[this.theme];
       if (!green && !special && this.theme !== 'cave') return d;
       for (let c = 3; c < this.w - 3; c++) {
         let r = 1;
@@ -133,12 +146,19 @@
         } else if (special) {
           if (k < 0.1) { d.push({ img: special, x: c * TILE - 1, y: top - special.height + 1 }); c += 2; }
           else if (k < 0.16 && this.theme === 'snow') d.push({ img: S.flowerDecor[1], x: c * TILE + 3, y: top - 9 });
+          else if (k < 0.2 && this.theme === 'water') { d.push({ img: S.coral, x: c * TILE, y: top - S.coral.height + 1 }); c += 1; }
         } else if (k < 0.12) {
           d.push({ img: S.crystal, x: c * TILE + 2, y: top - S.crystal.height + 1 });
           c += 1;
         }
       }
       return d;
+    }
+
+    // Underwater current at a pixel: +1 pushes right, -1 left, 0 none.
+    currentAt(x, y) {
+      const id = this.tileAt(Math.floor(x / TILE), Math.floor(y / TILE));
+      return id === G.Tiles.T.CURRENT_R ? 1 : (id === G.Tiles.T.CURRENT_L ? -1 : 0);
     }
 
     tileAt(c, r) {
@@ -256,11 +276,18 @@
     poofEnemy(e) {
       e.dying = true;
       e.remove = true;
+      this.particles.push(new G.StarBurst(e.x + e.w / 2, e.y + e.h / 2));
       for (let i = 0; i < 3; i++) this.particles.push(new G.Puff(e.x + e.w / 2 + (i - 1) * 5, e.y + e.h / 2));
       this.particles.push(new G.Sparkle(e.x + e.w / 2, e.y + e.h / 2));
       this.game.addScore(200);
       this.addScore(e.x, e.y, 200);
       G.Audio.sfx.stomp();
+    }
+
+    mountUp(m) {
+      this.player.mountOn(m);
+      this.particles.push(new G.Sparkle(m.x + m.w / 2, m.y));
+      G.Audio.sfx.powerup();
     }
 
     startStar() {
@@ -278,6 +305,7 @@
 
     // Consecutive stomps without touching the ground give bigger rewards (1UP at the end).
     stompScore(e, player) {
+      this.particles.push(new G.StarBurst(e.x + e.w / 2, e.y + 2));
       const i = player.chain;
       player.chain++;
       if (i >= STOMP_POINTS.length) {
@@ -311,10 +339,12 @@
 
       this.age += dt;
       this.timeAcc += dt;
-      if (this.timeAcc >= 1) { this.timeAcc -= 1; this.time--; if (this.time <= 0) this.killPlayer(); }
+      if (this.timeAcc >= 1) { this.timeAcc -= 1; if (this.time > 0) this.time--; if (this.time <= 0) this.killPlayer('time'); }
 
       for (const pl of this.platforms) pl.update();
       player.update(this);
+      for (const m of this.mounts) m.update(this);
+      this.mounts = this.mounts.filter((m) => !m.remove || m.state === 'ridden');
       this.updateCheckpoint();
       this.updateArena();
 
@@ -323,7 +353,7 @@
       for (const sg of this.signs) if (Math.abs(player.cx - (sg.x + 8)) < 14 && Math.abs(player.y + player.h - (sg.y + 16)) < 24) this.tip = sg.text;
 
       if (this.flagX != null && player.x + player.w >= this.flagX && !this.cleared) this.clearLevel();
-      if (player.y > this.pixelH + 40) this.killPlayer();
+      if (player.y > this.pixelH + 40) this.killPlayer('pit');
 
       for (const e of this.enemies) e.update(this);
       for (const e of this.enemies) {
@@ -337,9 +367,19 @@
           G.Audio.sfx.stomp();
           continue;
         }
-        if (!e.boss && (player.spinning || player.pound) && G.isStomp(player, e)) {
+        // Rolo's charge flattens anything in front
+        if (player.mount && player.ramT > 0 && !e.boss) {
+          G.launchEnemy(e);
+          this.particles.push(new G.StarBurst(e.x + e.w / 2, e.y + e.h / 2));
+          this.game.addScore(200); this.addScore(e.x, e.y, 200);
+          G.Audio.sfx.stomp();
+          continue;
+        }
+        // spin jumps, pounds and Rolo's armored feet beat even spiky enemies
+        if (!e.boss && (player.spinning || player.pound || (player.mount && e.spiky)) && G.isStomp(player, e)) {
           this.poofEnemy(e);
           if (player.spinning) { player.vy = G.Input.down('spin') || G.Input.down('jump') ? -5.5 : -3.5; player.chain++; }
+          else if (player.mount) player.bounce();
           continue;
         }
         if (e.boss && player.pound && G.isStomp(player, e)) { e.hit(this, player); player.pound = null; continue; }
@@ -353,6 +393,16 @@
       this.shots = this.shots.filter((s) => !s.remove);
 
       for (const k in this.bumps) { if (--this.bumps[k] <= 0) delete this.bumps[k]; }
+
+      // streams of bubbles show where the currents flow
+      if (this.currents.length && (G.game.animFrame & 3) === 0) {
+        const cam = G.R.cam;
+        for (const cu of this.currents) {
+          const px = cu[0] * TILE;
+          if (px < cam.x - 16 || px > cam.x + G.R.BASE_W + 16 || Math.random() > 0.12) continue;
+          this.particles.push(new G.Bubble(px + Math.random() * TILE, cu[1] * TILE + 8 + Math.random() * 6, cu[2] * 1.4));
+        }
+      }
 
       this.updateParticles();
       this.updateCamera();
@@ -383,18 +433,20 @@
       this.particles = this.particles.filter((p) => !p.remove);
     }
 
-    clearLevel() {
+    clearLevel(secret) {
       this.cleared = true;
+      this.secretExit = !!secret;
       this.outTimer = 0;
-      this.player.startWin(this.hasBoss);
+      this.player.startWin(this.hasBoss || this.secretExit);
       this.game.addScore(Math.max(0, this.time) * 10);
       G.Audio.stopMusic();
       G.Audio.sfx.flag();
     }
 
-    // Pits, spikes and timeout kill regardless of power-up.
-    killPlayer() {
+    // Pits, spikes and timeout kill regardless of power-up (easy mode rescues instead).
+    killPlayer(cause) {
       if (this.failed || this.cleared) return;
+      if (G.Settings.easy()) { this.rescue(cause); return; }
       this.failed = true;
       this.outTimer = 0;
       this.player.startDeath();
@@ -402,16 +454,40 @@
       G.Audio.sfx.die();
     }
 
+    // Easy mode: no lives lost. Pits put you back on the last safe ground, hits knock you back.
+    rescue(cause) {
+      const p = this.player;
+      if (cause === 'time') return;
+      if (cause !== 'pit' && p.invuln > 0) return;
+      if (cause === 'pit') {
+        const s = p.lastSafe || { x: this.playerStart.x, y: this.groundY - p.h };
+        p.x = s.x; p.y = s.y - 2; p.vx = 0; p.vy = 0; p.pound = null; p.ride = null;
+      } else {
+        p.vy = -4.5; p.vx = -p.facing * 1.6;
+      }
+      if (p.big && cause !== 'pit') p.shrink(); else p.invuln = 100;
+      this.shake = 6;
+      G.Audio.sfx.hurt();
+    }
+
     // Contact damage: power-ups are lost first, then a life.
     hurtPlayer() {
       const p = this.player;
       if (p.invuln > 0 || p.star > 0 || this.cleared || this.failed) return;
       if (p.carry) { p.carry.drop(); p.carry = null; }
+      if (p.mount) {
+        // Rolo takes the hit and runs off
+        p.leaveMount(true);
+        p.invuln = 90;
+        this.shake = 4;
+        G.Audio.sfx.hurt();
+        return;
+      }
       if (p.big) {
         p.shrink();
         G.Audio.sfx.hurt();
       } else {
-        this.killPlayer();
+        this.killPlayer('hit');
       }
     }
 
@@ -451,6 +527,7 @@
       if (this.flagX != null) this.drawFlag();
 
       for (const pl of this.platforms) pl.render();
+      for (const m of this.mounts) if (m.state !== 'ridden') m.render();
       for (const it of this.items) it.render();
       for (const e of this.enemies) e.render();
       for (const s of this.shots) s.render();

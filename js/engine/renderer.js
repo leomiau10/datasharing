@@ -12,7 +12,7 @@
   const R = {
     BASE_W: 384, BASE_H: BASE_H, cam: cam,
     init: init, resize: resize, setCamera: setCamera, clear: clear, clearTransparent: clearTransparent,
-    rect: rect, rectS: rectS, sprite: sprite, spriteS: spriteS, spriteScaled: spriteScaled, getCtx: getCtx
+    rect: rect, rectS: rectS, sprite: sprite, spriteS: spriteS, spriteScaled: spriteScaled, spriteXf: spriteXf, getCtx: getCtx
   };
 
   function init(canvasEl) {
@@ -75,6 +75,18 @@
 
   function sprite(img, x, y, flipX, flipY) { blit(img, Math.round(x - cam.x), Math.round(y - cam.y), flipX, flipY); }
   function spriteS(img, x, y, flipX, flipY) { blit(img, Math.round(x), Math.round(y), flipX, flipY); }
+  // Scaled sprite with optional flips (squash & stretch). x, y, w, h are the final world rect.
+  function spriteXf(img, x, y, w, h, flipX, flipY) {
+    const sx = Math.round(x - cam.x), sy = Math.round(y - cam.y);
+    const dw = Math.max(1, Math.round(w)), dh = Math.max(1, Math.round(h));
+    if (!flipX && !flipY) { ctx.drawImage(img, sx, sy, dw, dh); return; }
+    ctx.save();
+    ctx.translate(sx + (flipX ? dw : 0), sy + (flipY ? dh : 0));
+    ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+    ctx.drawImage(img, 0, 0, dw, dh);
+    ctx.restore();
+  }
+
   function spriteScaled(img, x, y, w, h) { ctx.drawImage(img, Math.round(x - cam.x), Math.round(y - cam.y), w, h); }
   function getCtx() { return ctx; }
 

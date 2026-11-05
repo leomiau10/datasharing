@@ -23,7 +23,9 @@
     PLATFORM: 12,// one-way (jump-through) platform
     FLAG_POLE: 13,
     FLAG_TOP: 14,
-    CASTLE: 15
+    CASTLE: 15,
+    CURRENT_R: 16, // underwater current pushing right (not solid)
+    CURRENT_L: 17  // underwater current pushing left (not solid)
   };
 
   // Map level-string characters to tile ids / spawns.
@@ -44,7 +46,9 @@
     '-': T.PLATFORM,
     '|': T.FLAG_POLE,
     'T': T.FLAG_TOP,
-    'C': T.CASTLE
+    'C': T.CASTLE,
+    '>': T.CURRENT_R,
+    '<': T.CURRENT_L
   };
 
   // Spawn characters (do not become tiles, they create entities).
@@ -66,7 +70,11 @@
     'r': 'gem_block',
     'M': 'plat_h',
     'V': 'plat_v',
-    '!': 'sign'
+    '!': 'sign',
+    'R': 'mount',
+    'f': 'fish',
+    'j': 'jelly',
+    'E': 'secret_exit'
   };
 
   function isSolid(id) {

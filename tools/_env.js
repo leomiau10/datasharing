@@ -19,9 +19,9 @@ function load() {
   const els = {};
   s.document = { readyState: 'complete', createElement: canvas, getElementById: (id) => (els[id] || (els[id] = canvas())), addEventListener: noop, querySelectorAll: () => [] };
   vm.createContext(s);
-  ['js/data/tiles.js', 'js/data/save.js', 'js/engine/renderer.js', 'js/engine/text.js', 'js/engine/input.js', 'js/engine/audio.js',
+  ['js/data/tiles.js', 'js/data/save.js', 'js/data/settings.js', 'js/engine/renderer.js', 'js/engine/text.js', 'js/engine/input.js', 'js/engine/audio.js',
     'js/engine/physics.js', 'js/engine/sprites.js', 'js/engine/backgrounds.js', 'js/data/levels.js', 'js/game/entities.js',
-    'js/game/player.js', 'js/game/enemies.js', 'js/game/hud.js', 'js/game/level.js', 'js/game/worldmap.js', 'js/main.js']
+    'js/game/player.js', 'js/game/enemies.js', 'js/game/mount.js', 'js/game/hud.js', 'js/game/level.js', 'js/game/worldmap.js', 'js/main.js']
     .forEach((f) => vm.runInContext(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), s, { filename: f }));
   return s.GAME;
 }

@@ -174,6 +174,95 @@
       '              ',
       '              ',
       '              '] },
+    // ---- underwater chunks
+    water_start: { floor: '############', art: ['  S   !     '] },
+    water_start_plain: { floor: '############', art: ['  S         '] },
+    reef: { floor: '################', art: [
+      '    o  o  o     ',
+      '                ',
+      '   XXX    XX    ',
+      '                ',
+      '        o       ',
+      '  XX   XXX   XX ',
+      '                ',
+      '     g          '] },
+    kelp_gate: { floor: '##############', art: [
+      '     X        ',
+      '     X        ',
+      '     X     X  ',
+      '     X  o  X  ',
+      '        o  X  ',
+      '        o  X  ',
+      '     X     X  ',
+      '     X     X  ',
+      '     X        ',
+      '     X        ',
+      '     X        ',
+      '     X        '] },
+    current_run: { floor: '####################', art: [
+      '                    ',
+      '  >>>>>>>>>>>>>>>   ',
+      '  o o o o o o o o   ',
+      '  >>>>>>>>>>>>>>>   ',
+      '                    ',
+      '                    ',
+      '      f       f     '] },
+    current_back: { floor: '##################', art: [
+      '                  ',
+      '  <<<<<<<<<<<<<<  ',
+      '  o  o  o  o  o   ',
+      '  <<<<<<<<<<<<<<  ',
+      '                  '] },
+    fish_school: { floor: '##################', art: [
+      '        f         ',
+      '                  ',
+      '   f          f   ',
+      '                  ',
+      '       ooo        ',
+      '                  ',
+      '      f           ',
+      '                  ',
+      '  g          g    '] },
+    jelly_column: { floor: '##############', art: [
+      '   j      j   ',
+      '              ',
+      '              ',
+      '              ',
+      '      j       ',
+      '              ',
+      '     ooo      ',
+      '              ',
+      '              ',
+      '              '] },
+    medal_reef: { floor: '##############', art: [
+      '   XXXXXXXX   ',
+      '   X  *   X   ',
+      '   X      X   ',
+      '   XXX  XXX   ',
+      '              ',
+      '              ',
+      '              ',
+      '              '] },
+    // ---- secret exit: ride the lift up to a hidden ledge with the purple flag
+    secret_lift: { floor: '##############', art: [
+      '          E   ',
+      '     XXXXXXXX ',
+      '              ',
+      '              ',
+      '              ',
+      '              ',
+      '  V           '] },
+    // ---- Rolo the beetle waiting to be ridden
+    mount_spot: { floor: '##############', art: [
+      '     ?        ',
+      '              ',
+      '              ',
+      '  !     R     '] },
+    mount_spot_plain: { floor: '##############', art: [
+      '     ?        ',
+      '              ',
+      '              ',
+      '        R     '] },
     // ---- extra chunks for the later worlds
     bridge_long: { floor: '##==============##', art: [
       '      oooo        ',
@@ -244,10 +333,11 @@
         'A: SALTAR   B: CORRER   MANTEN A PARA SALTAR MAS ALTO',
         'CORRE CON B Y LLENA EL MEDIDOR: SALTARAS MUCHO MAS LEJOS',
         'Y: SALTO GIRATORIO. ELIMINA ENEMIGOS DE UN GOLPE',
+        'ROLO EL ESCARABAJO: TOCALO PARA MONTAR. B EMBISTE, A EN EL AIRE DOBLE SALTO, Y PARA BAJAR',
         'EN EL AIRE PULSA ABAJO PARA UN GOLPE AL SUELO. ROMPE LADRILLOS'
       ],
       chunks: ['start', 'flat_coins', 'blocks_row', 'tip', 'pit_small', 'pipes', 'medal_blocks', 'crowd',
-        'tip', 'hills', 'checkpoint', 'tip', 'tunnel', 'pyramid', 'medal_high', 'pit_small', 'bonus_1up',
+        'tip', 'hills', 'checkpoint', 'mount_spot', 'tip', 'tunnel', 'pyramid', 'medal_high', 'pit_small', 'bonus_1up',
         'flat_coins', 'medal_pit', 'end'] },
     { name: 'WORLD 1-2  CRYSTAL CAVERN', theme: 'cave',
       tips: ['MANTEN B SOBRE UN CAPARAZON PARA AGARRARLO. SUELTA B PARA LANZARLO'],
@@ -256,10 +346,10 @@
     { name: 'WORLD 1-3  CLOUD TOPS', theme: 'sky',
       tips: ['CON LA NUBE: MANTEN A EN EL AIRE PARA PLANEAR'],
       chunks: ['start', 'bonus_cloud', 'sky_ledges', 'lift_h', 'bees', 'medal_pit', 'checkpoint',
-        'sky_ledges', 'lift_v', 'medal_high', 'lift_h', 'bees', 'medal_blocks', 'pit_big', 'end'] },
+        'sky_ledges', 'lift_v', 'medal_high', 'lift_h', 'bees', 'secret_lift', 'medal_blocks', 'pit_big', 'end'] },
     { name: 'WORLD 2-1  SUNSET FIELDS', theme: 'dusk',
       tips: ['SALTA CONTRA UNA PARED Y PULSA A PARA REBOTAR HACIA ARRIBA'],
-      chunks: ['start', 'hills', 'crowd', 'spikes', 'medal_wall', 'thorns', 'bonus_gem', 'checkpoint',
+      chunks: ['start', 'mount_spot_plain', 'hills', 'crowd', 'spikes', 'medal_wall', 'thorns', 'bonus_gem', 'checkpoint',
         'hoppers', 'pit_big', 'pipes', 'medal_blocks', 'hills', 'bees', 'medal_pit', 'end'] },
     { name: 'WORLD 2-2  DEEP CAVES', theme: 'cave',
       chunks: ['start_plain', 'thorns', 'tunnel', 'pit_big', 'medal_tunnel', 'hoppers', 'crowd', 'lift_h',
@@ -271,14 +361,14 @@
 
     // ---- Maple Woods
     { name: 'WORLD 3-1  MAPLE WOODS', theme: 'forest',
-      chunks: ['start_plain', 'flat_coins', 'hills', 'bees', 'medal_blocks', 'pit_small', 'crowd', 'step_blocks',
+      chunks: ['start_plain', 'mount_spot_plain', 'flat_coins', 'hills', 'bees', 'medal_blocks', 'pit_small', 'crowd', 'step_blocks',
         'checkpoint', 'hoppers', 'medal_high', 'bridge_long', 'thorns', 'medal_pit', 'end'] },
     { name: 'WORLD 3-2  TREETOP TRAIL', theme: 'forest',
       chunks: ['start_plain', 'sky_ledges', 'step_blocks', 'bees', 'medal_wall', 'lift_h', 'checkpoint',
         'bridge_long', 'bonus_1up', 'sky_ledges', 'medal_pit', 'hills', 'medal_blocks', 'end'] },
     { name: 'WORLD 3-3  HAUNTED GROVE', theme: 'night',
       chunks: ['start_plain', 'tunnel', 'hoppers', 'spikes', 'medal_tunnel', 'thorns', 'checkpoint', 'bonus_gem',
-        'crowd', 'pit_big', 'medal_wall', 'step_blocks', 'medal_high', 'end'] },
+        'crowd', 'pit_big', 'medal_wall', 'step_blocks', 'secret_lift', 'medal_high', 'end'] },
     { name: 'WORLD 3-4  MOSSY DEPTHS', theme: 'cave',
       chunks: ['start_plain', 'tunnel', 'crowd', 'spike_run', 'medal_blocks', 'pipes', 'lift_v', 'checkpoint',
         'thorns', 'lifts_double', 'medal_tunnel', 'hoppers', 'medal_pit', 'end'] },
@@ -289,14 +379,14 @@
 
     // ---- Sunbaked Sands
     { name: 'WORLD 4-1  DUNE DASH', theme: 'desert',
-      chunks: ['start_plain', 'flat_coins', 'pyramid', 'crowd', 'medal_blocks', 'pit_big', 'hills', 'checkpoint',
+      chunks: ['start_plain', 'mount_spot_plain', 'flat_coins', 'pyramid', 'crowd', 'medal_blocks', 'pit_big', 'hills', 'checkpoint',
         'thorns', 'spike_run', 'medal_pit', 'bonus_1up', 'hoppers', 'medal_high', 'end'] },
     { name: 'WORLD 4-2  OASIS BRIDGES', theme: 'desert',
       chunks: ['start_plain', 'bridge_long', 'pipes', 'lift_h', 'medal_pit', 'bridge_long', 'checkpoint', 'bees',
         'lifts_double', 'medal_blocks', 'step_blocks', 'bridge_long', 'medal_high', 'end'] },
     { name: 'WORLD 4-3  SANDSTONE CAVES', theme: 'cave',
       chunks: ['start_plain', 'tunnel', 'thorns', 'medal_tunnel', 'pit_small', 'crowd', 'checkpoint', 'spike_run',
-        'lift_v', 'medal_wall', 'hoppers', 'tunnel', 'medal_pit', 'end'] },
+        'lift_v', 'medal_wall', 'hoppers', 'secret_lift', 'tunnel', 'medal_pit', 'end'] },
     { name: 'WORLD 4-4  MIRAGE SKIES', theme: 'sky',
       chunks: ['start_plain', 'bonus_cloud', 'sky_ledges', 'lifts_double', 'bees', 'medal_pit', 'checkpoint',
         'sky_ledges', 'lift_v', 'medal_high', 'bridge_long', 'bees', 'medal_blocks', 'end'] },
@@ -308,7 +398,7 @@
     // ---- Frostfire Peaks
     { name: 'WORLD 5-1  FROZEN SLOPES', theme: 'snow',
       tips: ['EL HIELO RESBALA: SUELTA LA DIRECCION ANTES PARA FRENAR'],
-      chunks: ['start', 'flat_coins', 'hills', 'crowd', 'medal_blocks', 'pit_small', 'step_blocks', 'checkpoint',
+      chunks: ['start', 'mount_spot_plain', 'flat_coins', 'hills', 'crowd', 'medal_blocks', 'pit_small', 'step_blocks', 'checkpoint',
         'thorns', 'pit_big', 'medal_high', 'bonus_1up', 'bees', 'medal_pit', 'end'] },
     { name: 'WORLD 5-2  ICICLE HOLLOW', theme: 'snow',
       chunks: ['start_plain', 'tunnel', 'spike_run', 'medal_tunnel', 'crowd', 'lift_h', 'checkpoint', 'thorns',
@@ -322,19 +412,47 @@
     { name: 'WORLD 5-5  LAVA CITADEL', theme: 'volcano', bossHp: 5,
       tips: ['ULTIMA BATALLA: EL REY GLOOP EN SU CIUDADELA. 5 GOLPES'],
       chunks: ['start_plain', 'spike_run', 'thorns', 'lifts_double', 'medal_high', 'crowd', 'spike_run',
-        'checkpoint', 'bonus_gem', 'pit_big', 'medal_wall', 'hoppers', 'lift_h', 'medal_pit', 'tip', 'boss_arena'] }
+        'checkpoint', 'bonus_gem', 'pit_big', 'medal_wall', 'hoppers', 'lift_h', 'medal_pit', 'tip', 'boss_arena'] },
+
+    // ---- hidden underwater levels, opened by secret exits
+    { name: 'COAST 1  CORAL COVE', theme: 'water', water: true, unlock: { secret: 2 },
+      tips: ['BAJO EL AGUA: TOCA A PARA NADAR. ARRIBA Y ABAJO PARA SUBIR O BAJAR. LAS CORRIENTES TE EMPUJAN'],
+      chunks: ['water_start', 'reef', 'fish_school', 'medal_reef', 'current_run', 'checkpoint', 'kelp_gate',
+        'jelly_column', 'medal_high', 'reef', 'current_back', 'medal_pit', 'end'] },
+    { name: 'COAST 2  SUNKEN GROVE', theme: 'water', water: true, unlock: { secret: 8 },
+      chunks: ['water_start_plain', 'fish_school', 'kelp_gate', 'medal_reef', 'jelly_column', 'checkpoint',
+        'current_run', 'reef', 'medal_blocks', 'kelp_gate', 'current_back', 'medal_pit', 'end'] },
+    { name: 'COAST 3  OASIS DEPTHS', theme: 'water', water: true, unlock: { secret: 13 },
+      chunks: ['water_start_plain', 'reef', 'current_back', 'medal_reef', 'jelly_column', 'fish_school',
+        'checkpoint', 'kelp_gate', 'current_run', 'medal_high', 'reef', 'medal_pit', 'end'] },
+
+    // ---- Starry Atoll: secret world reached from Coral Cove
+    { name: 'STAR 1  COMET CLIMB', theme: 'sky', unlock: { level: 21 },
+      chunks: ['start_plain', 'lifts_double', 'spike_run', 'medal_wall', 'sky_ledges', 'bonus_1up', 'checkpoint',
+        'lift_v', 'bees', 'medal_high', 'lifts_double', 'bridge_long', 'medal_pit', 'end'] },
+    { name: 'STAR 2  MOONLIT MAZE', theme: 'night',
+      chunks: ['start_plain', 'thorns', 'step_blocks', 'medal_tunnel', 'spike_run', 'hoppers', 'checkpoint',
+        'bonus_gem', 'lifts_double', 'medal_wall', 'thorns', 'spike_run', 'medal_pit', 'end'] },
+    { name: 'STAR 3  NOVA CORE', theme: 'volcano',
+      chunks: ['start_plain', 'spike_run', 'lifts_double', 'medal_high', 'thorns', 'spike_run', 'checkpoint',
+        'bonus_1up', 'lift_v', 'medal_wall', 'crowd', 'lifts_double', 'medal_pit', 'end'] }
   ];
 
   const levels = defs.map((d) => ({
     name: d.name,
     theme: d.theme,
     bossHp: d.bossHp,
+    water: !!d.water,
+    unlock: d.unlock,
+    hasSecret: d.chunks.indexOf('secret_lift') >= 0,
     tips: d.tips || [],
     groundRow: GROUND_R,
     map: assemble(d.chunks)
   }));
 
   // World maps (original layouts). Each map is a 48x22-cell canvas (384x176 px).
+  // Warps: `warp` +1/-1 moves to the next/previous map, `warpTo` names a map; `req` is the level that opens it.
+  // Edges with `secret` stay hidden until that level's secret exit is found.
   // islands/plateau are superellipse blobs in cells: [cx, cy, rx, ry]. Node/edge coordinates are pixels;
   // edges carry waypoints so trails bend. Nodes are levels or warps (+1 next map, -1 previous map).
   const worlds = [
@@ -349,7 +467,9 @@
         { x: 184, y: 64, level: 3 },
         { x: 288, y: 104, level: 4 },
         { x: 320, y: 44, level: 5, castle: true },
-        { x: 344, y: 128, warp: 1 }
+        { x: 344, y: 128, warp: 1, req: 5 },
+        { x: 128, y: 12, level: 21 },
+        { x: 156, y: 12, warpTo: 4, req: 21 }
       ],
       edges: [
         { a: 0, b: 1, pts: [[56, 104], [56, 116], [128, 116]] },
@@ -357,7 +477,9 @@
         { a: 1, b: 3, pts: [[128, 116], [184, 116], [184, 64]] },
         { a: 3, b: 4, pts: [[184, 64], [204, 64], [204, 104], [288, 104]] },
         { a: 4, b: 5, pts: [[288, 104], [288, 72], [320, 72], [320, 44]] },
-        { a: 4, b: 6, pts: [[288, 104], [344, 104], [344, 128]] }
+        { a: 4, b: 6, pts: [[288, 104], [344, 104], [344, 128]] },
+        { a: 2, b: 7, secret: 2, pts: [[96, 28], [96, 12], [128, 12]] },
+        { a: 7, b: 8, pts: [[128, 12], [156, 12]] }
       ],
       decor: [
         { k: 'hut', x: 20, y: 84 },
@@ -377,7 +499,8 @@
         { x: 208, y: 128, level: 8 },
         { x: 264, y: 104, level: 9 },
         { x: 304, y: 40, level: 10, castle: true },
-        { x: 344, y: 88, warp: 1 }
+        { x: 344, y: 88, warp: 1, req: 10 },
+        { x: 176, y: 148, level: 22 }
       ],
       edges: [
         { a: 0, b: 1, pts: [[40, 88], [40, 120], [88, 120]] },
@@ -385,7 +508,8 @@
         { a: 2, b: 3, pts: [[152, 72], [184, 72], [184, 128], [208, 128]] },
         { a: 3, b: 4, pts: [[208, 128], [240, 128], [240, 104], [264, 104]] },
         { a: 4, b: 5, pts: [[264, 104], [296, 104], [296, 40], [304, 40]] },
-        { a: 5, b: 6, pts: [[304, 40], [320, 40], [320, 88], [344, 88]] }
+        { a: 5, b: 6, pts: [[304, 40], [320, 40], [320, 88], [344, 88]] },
+        { a: 3, b: 7, secret: 8, pts: [[208, 128], [208, 148], [176, 148]] }
       ],
       decor: [
         { k: 'fortress', x: 293, y: 12 },
@@ -402,7 +526,8 @@
         { x: 168, y: 72, level: 13 },
         { x: 232, y: 104, level: 14 },
         { x: 296, y: 48, level: 15, castle: true },
-        { x: 352, y: 120, warp: 1 }
+        { x: 352, y: 120, warp: 1, req: 15 },
+        { x: 168, y: 44, level: 23 }
       ],
       edges: [
         { a: 0, b: 1, pts: [[32, 104], [32, 120], [72, 120]] },
@@ -410,7 +535,8 @@
         { a: 2, b: 3, pts: [[120, 32], [152, 32], [152, 72], [168, 72]] },
         { a: 3, b: 4, pts: [[168, 72], [168, 104], [232, 104]] },
         { a: 4, b: 5, pts: [[232, 104], [296, 104], [296, 48]] },
-        { a: 5, b: 6, pts: [[296, 48], [344, 48], [344, 120], [352, 120]] }
+        { a: 5, b: 6, pts: [[296, 48], [344, 48], [344, 120], [352, 120]] },
+        { a: 3, b: 7, secret: 13, pts: [[168, 72], [168, 44]] }
       ],
       decor: [
         { k: 'fortress', x: 285, y: 20 },
@@ -438,6 +564,26 @@
       decor: [
         { k: 'fortress', x: 309, y: 12 },
         { k: 'hut', x: 60, y: 92 }
+      ] },
+    // Secret world, reached through the pipe beside Coral Cove.
+    { name: 'STARRY ATOLL', palette: 'star',
+      islands: [[24, 10, 18, 8]],
+      plateau: null,
+      bridgeRows: [],
+      nodes: [
+        { x: 80, y: 120, warpTo: 0 },
+        { x: 136, y: 80, level: 24 },
+        { x: 208, y: 112, level: 25 },
+        { x: 280, y: 72, level: 26 }
+      ],
+      edges: [
+        { a: 0, b: 1, pts: [[80, 120], [80, 80], [136, 80]] },
+        { a: 1, b: 2, pts: [[136, 80], [136, 112], [208, 112]] },
+        { a: 2, b: 3, pts: [[208, 112], [280, 112], [280, 72]] }
+      ],
+      decor: [
+        { k: 'spire', x: 320, y: 90 },
+        { k: 'spire', x: 180, y: 40 }
       ] }
   ];
 

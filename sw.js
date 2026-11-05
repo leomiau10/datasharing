@@ -1,12 +1,12 @@
 // Service worker: network-first (so updates reach the phone), cache fallback for offline play.
-const CACHE = 'pip-quest-v6';
+const CACHE = 'pip-quest-v8';
 const ASSETS = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './vendor/three.module.min.js',
-  './js/data/tiles.js', './js/data/save.js', './js/data/levels.js',
+  './js/data/tiles.js', './js/data/save.js', './js/data/settings.js', './js/data/levels.js',
   './js/engine/renderer.js', './js/engine/text.js', './js/engine/input.js', './js/engine/audio.js',
   './js/engine/physics.js', './js/engine/sprites.js', './js/engine/backgrounds.js', './js/engine/render3d.js',
-  './js/game/entities.js', './js/game/player.js', './js/game/enemies.js', './js/game/hud.js',
+  './js/game/entities.js', './js/game/player.js', './js/game/enemies.js', './js/game/mount.js', './js/game/hud.js',
   './js/game/level.js', './js/game/worldmap.js', './js/main.js'
 ];
 

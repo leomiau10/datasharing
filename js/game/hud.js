@@ -53,7 +53,8 @@
     }
     if (level.player.star > 0) T.drawShadow('STAR', 234, y, ['#ff4a6a', '#ffd84a', '#4ae08a', '#4ab0ff'][(game.animFrame >> 2) & 3], 1, '#000');
 
-    T.drawShadow('TIME ' + pad(level.time, 3), R.BASE_W - 84, y, level.time <= 60 ? '#ff7a6a' : '#fff', 1, '#000');
+    // kept left of the settings/mute buttons in the top-right corner
+    T.drawShadow('TIME ' + pad(level.time, 3), R.BASE_W - 118, y, level.time <= 60 ? '#ff7a6a' : '#fff', 1, '#000');
     if (level.tip) drawTip(level.tip);
     if (level.age < 3 && !level.cleared && !level.tip) T.drawCenterShadow(level.def.name || '', 30, '#fff', 1, '#000');
   }

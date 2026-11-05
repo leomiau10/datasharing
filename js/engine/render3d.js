@@ -33,6 +33,7 @@
     desert: { sky: 0xfff0d8, ground: 0x8a6a3a, hemi: 1.6, sun: 0xfff4d8, sunI: 2.8 },
     snow: { sky: 0xe8f4ff, ground: 0x8aa0c0, hemi: 1.8, sun: 0xf4f8ff, sunI: 2.2 },
     volcano: { sky: 0xff9a60, ground: 0x2a0a08, hemi: 1.1, sun: 0xffa060, sunI: 2.2 },
+    water: { sky: 0x9ad8ff, ground: 0x1a3a6a, hemi: 1.4, sun: 0xc8f0ff, sunI: 1.7 },
     night: { sky: 0x8a9ae0, ground: 0x1a1a3a, hemi: 1.0, sun: 0xc8d4ff, sunI: 1.5 }
   };
 
@@ -80,8 +81,19 @@
     S.coin.forEach((c) => depthOverride.set(c, 3));
 
     ready = true;
-    G.R.resize();
+    setQuality(quality);
     return true;
+  }
+
+  // '3d-high': shadows + up to 2x pixel density; '3d-low': no shadows, 1x (smoother on phones).
+  let quality = '3d-high';
+  function setQuality(q) {
+    quality = q;
+    if (!ready) return;
+    const high = q !== '3d-low';
+    sun.castShadow = high;
+    renderer.setPixelRatio(high ? Math.min(window.devicePixelRatio || 1, 2) : 1);
+    G.R.resize();
   }
 
   function resize(cssW, cssH) {
@@ -248,10 +260,11 @@
   // Run the existing 2D render code with G.R redirected into the 3D pools.
   function captureEntities(level) {
     const R = G.R;
-    const orig = { sprite: R.sprite, rect: R.rect, spriteScaled: R.spriteScaled };
+    const orig = { sprite: R.sprite, rect: R.rect, spriteScaled: R.spriteScaled, spriteXf: R.spriteXf };
     let owner = null, z = 0;
     R.sprite = (img, x, y, fx, fy) => emitSprite(img, x, y, img.width, img.height, !!fx, !!fy, owner, z, level);
     R.spriteScaled = (img, x, y, w, h) => emitSprite(img, x, y, w, h, false, false, owner, z, level);
+    R.spriteXf = (img, x, y, w, h, fx, fy) => emitSprite(img, x, y, w, h, !!fx, !!fy, owner, z, level);
     R.rect = (x, y, w, h, color) => emitRect(x, y, w, h, color, z);
     try {
       z = -1.5;
@@ -264,13 +277,14 @@
       if (level.flagX != null) level.drawFlag();
       z = 0;
       for (const pl of level.platforms) { owner = pl; pl.render(); }
+      for (const m of level.mounts) if (m.state !== 'ridden') { owner = m; m.render(); }
       for (const it of level.items) { owner = it; it.render(); }
       for (const e of level.enemies) { owner = e; e.render(); }
       for (const s of level.shots) { owner = s; s.render(); }
       owner = level.player; level.player.render();
       for (const pt of level.particles) { owner = pt; pt.render(); }
     } finally {
-      R.sprite = orig.sprite; R.rect = orig.rect; R.spriteScaled = orig.spriteScaled;
+      R.sprite = orig.sprite; R.rect = orig.rect; R.spriteScaled = orig.spriteScaled; R.spriteXf = orig.spriteXf;
     }
   }
 
@@ -511,8 +525,9 @@
 
   G.R3 = {
     init: init,
-    ok: function () { return ready; },
+    ok: function () { return ready && (!G.Settings || G.Settings.use3D()); },
     resize: resize,
+    setQuality: setQuality,
     setActive: setActive,
     render: render
   };

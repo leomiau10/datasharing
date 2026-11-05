@@ -219,6 +219,9 @@
     sand: { sea: '#2a90d8', wave: '#6ac0f8', scatter: ['cactus', 'rock', 'cactus', 'palm'],
       g: ['#f0c860', '#fff0a0', '#d8a848', '#7a5020'], G: ['#f8d880', '#fff4c0', '#e0b860', '#7a5020'],
       c: ['#d08850', '#f0a868', '#a86030', '#5a3010'], C: ['#e09a5a', '#f8b878', '#b87038', '#5a3010'] },
+    star: { sea: '#14143a', wave: '#2e2e78', scatter: ['round', 'rock', 'bush'],
+      g: ['#7a6ad8', '#a89af0', '#5a4ab8', '#1a1048'], G: ['#9a8ae8', '#c8bcff', '#7a6ad0', '#1a1048'],
+      c: ['#4a3a8a', '#6a5ab0', '#2e2464', '#120a30'], C: ['#5a4a9a', '#7a6ac0', '#3a2e74', '#120a30'] },
     snow: { sea: '#2a5ab0', wave: '#5a8ad8', scatter: ['snowpine', 'snowpine', 'rock'],
       g: ['#eef4ff', '#ffffff', '#c8dcf0', '#4a6a90'], G: ['#ffffff', '#ffffff', '#d8e8f8', '#4a6a90'],
       c: ['#8ab0d8', '#b8d8f8', '#5a80b0', '#203a60'], C: ['#9ac0e4', '#c8e4ff', '#6a90c0', '#203a60'] }
@@ -311,10 +314,12 @@
     const cellAt = (px, py) => at(Math.floor(py / TS), Math.floor(px / TS));
     for (const pass of [0, 1]) {
       for (const e of data.edges) {
+        const hidden = e.secret != null; // secret trails are drawn at runtime once revealed
         walk(e.pts, function (px, py) {
           const t = cellAt(px, py);
-          if (t === 'S' || t === 'b') return;
-          if (pass === 0) { x.fillStyle = '#9a7040'; x.fillRect(px - 3, py - 3, 7, 7); onTrail.push([px, py]); }
+          if (pass === 0) onTrail.push([px, py]);
+          if (t === 'S' || t === 'b' || hidden) return;
+          if (pass === 0) { x.fillStyle = '#9a7040'; x.fillRect(px - 3, py - 3, 7, 7); }
           else { x.fillStyle = '#f0d8a0'; x.fillRect(px - 2, py - 2, 5, 5); }
         });
       }
@@ -413,8 +418,30 @@
 
     neighbors(i) {
       const n = [];
-      for (const e of this.data.edges) { if (e.a === i) n.push(e.b); if (e.b === i) n.push(e.a); }
+      for (const e of this.data.edges) {
+        if (this.edgeHidden(e)) continue;
+        if (e.a === i) n.push(e.b);
+        if (e.b === i) n.push(e.a);
+      }
       return n;
+    }
+
+    // Map a warp node to the world it leads to.
+    dest(n, wi) { return n.warpTo != null ? n.warpTo : (n.warp ? wi + n.warp : null); }
+
+    // Secret levels (and warps that need them) stay invisible until revealed.
+    isHidden(i) {
+      const n = this.nodes[i];
+      if (n.level != null) {
+        const d = G.Levels[n.level];
+        return !!(d.unlock && d.unlock.secret != null && !G.Save.isOpen(n.level));
+      }
+      if (n.req != null) return !G.Save.isOpen(n.req);
+      return false;
+    }
+
+    edgeHidden(e) {
+      return (e.secret != null && !G.Save.isSecret(e.secret)) || this.isHidden(e.a) || this.isHidden(e.b);
     }
 
     // Last level of this world (its fortress) — clearing it opens the warp to the next world.
@@ -426,15 +453,16 @@
 
     isUnlocked(i) {
       const n = this.nodes[i];
-      if (n.warp === -1) return true;
+      if (n.level != null) return G.Save.isOpen(n.level);
+      if (n.req != null) return G.Save.isCleared(n.req);
       if (n.warp === 1) return G.Save.isCleared(this.lastLevel());
-      return n.level === 0 || G.Save.isCleared(n.level - 1);
+      return true;
     }
 
-    // Travel to the neighbouring world map, arriving on its matching warp.
-    warpTo(dir) {
-      const target = this.world + dir;
-      const arrive = G.Worlds[target].nodes.findIndex((n) => n.warp === -dir);
+    // Travel through a warp, arriving on the target map's warp that leads back here.
+    warpTo(n) {
+      const target = this.dest(n, this.world);
+      const arrive = G.Worlds[target].nodes.findIndex((m) => this.dest(m, target) === this.world);
       G.Save.setWorld(target, Math.max(0, arrive));
       this.game.go(() => this.game.goMap());
     }
@@ -479,7 +507,7 @@
         if (this.isUnlocked(this.current)) {
           G.Audio.sfx.start();
           const nd = this.nodes[this.current], o = this.origin();
-          if (nd.warp) this.warpTo(nd.warp);
+          if (nd.warp || nd.warpTo != null) this.warpTo(nd);
           else this.game.go(() => this.game.startLevel(nd.level), nd.x + o.x, nd.y + o.y);
         } else {
           G.Audio.sfx.bump();
@@ -520,8 +548,8 @@
       R.spriteS(S.lifeIcon, o.x, 3);
       T.drawShadow('x' + this.game.lives, o.x + 16, 6, '#fff', 1, '#3a2a1a');
       let name;
-      if (nd.warp === 1) name = 'IR A ' + G.Worlds[this.world + 1].name;
-      else if (nd.warp === -1) name = 'VOLVER A ' + G.Worlds[this.world - 1].name;
+      const target = this.dest(nd, this.world);
+      if (target != null) name = (target < this.world ? 'VOLVER A ' : 'IR A ') + G.Worlds[target].name;
       else name = G.Levels[nd.level].name;
       const scale = T.width(name, 2) <= MW - 48 ? 2 : 1;
       T.drawShadow(name, o.x + 44, scale === 2 ? 3 : 6, '#ffffff', scale, '#3a2a1a');
@@ -542,10 +570,27 @@
         for (let i = 0; i < TS; i += 3) ctx.fillRect(f[0] + i, f[1] + ((tt >> 1) + i * 3) % TS, 1, 3);
       }
 
+      // revealed secret trails (not baked into the land layer)
+      for (const pass of [0, 1]) {
+        for (const e of this.data.edges) {
+          if (e.secret == null || this.edgeHidden(e)) continue;
+          walk(e.pts, function (px, py) {
+            const t = A.grid[Math.floor(py / TS)] && A.grid[Math.floor(py / TS)][Math.floor(px / TS)];
+            if (t === 'S' || t === 'b') return;
+            ctx.fillStyle = pass ? '#e8c8ff' : '#7a4ab0';
+            if (pass) ctx.fillRect(px - 2, py - 2, 5, 5); else ctx.fillRect(px - 3, py - 3, 7, 7);
+          });
+        }
+      }
+
       // level dots
       for (let i = 0; i < this.nodes.length; i++) {
         const n = this.nodes[i];
-        if (n.warp) {
+        if (this.isHidden(i)) continue;
+        if (n.level != null && G.Levels[n.level].hasSecret && G.Save.isSecret(n.level)) {
+          ctx.fillStyle = '#d8a8ff'; ctx.fillRect(n.x + 5, n.y - 9, 1, 5); ctx.fillRect(n.x + 3, n.y - 7, 5, 1);
+        }
+        if (n.warp || n.warpTo != null) {
           ctx.globalAlpha = this.isUnlocked(i) ? 1 : 0.45;
           ctx.drawImage(warpIcon, n.x - 8, n.y - 9);
           ctx.globalAlpha = 1;
@@ -562,8 +607,8 @@
 
       // hero
       const hp = this.heroPos();
-      const idle = S.heroSets.small.idle, walk = S.heroSets.small.walk;
-      const img = hp.walking && ((tt >> 3) & 1) ? walk : idle;
+      const idle = S.heroSets.small.idle, walkImg = S.heroSets.small.walk;
+      const img = hp.walking && ((tt >> 3) & 1) ? walkImg : idle;
       const bobY = hp.walking ? 0 : Math.round(Math.sin(this.bob * 5));
       ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(Math.round(hp.x) - 5, Math.round(hp.y) + 1, 10, 3);
       R.spriteS(img, Math.round(hp.x - img.width / 2), Math.round(hp.y - img.height + 2 + bobY), hp.dir < 0);

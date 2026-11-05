@@ -4,6 +4,7 @@
 
   const STEP = 1 / 60;
   const IRIS_FRAMES = 28;
+  const FINAL_LEVEL = 20;
 
   class Game {
     constructor() {
@@ -13,6 +14,7 @@
       this.coins = s.coins || 0;
       this.lives = s.lives || 5;
       this.form = 'small';
+      this.hasMount = false;
       this.level = null;
       this.levelIndex = 0;
       this.worldMap = null;
@@ -24,6 +26,8 @@
       this.trans = null; // { phase: 'out'|'in', t, fn, cx, cy }
       this.titleScroll = 0;
       this.bg = new G.Background('overworld');
+      this.settingsRow = 0;
+      this.settingsReturn = 'title';
     }
 
     addCoin() {
@@ -67,11 +71,13 @@
       const f = this.focusPoint();
       this.go(() => {
         G.Save.markCleared(this.levelIndex);
+        if (this.level.secretExit) G.Save.markSecret(this.levelIndex);
         G.Save.addMedals(this.levelIndex, this.level.medalsGot);
         delete this.checkpoints[this.levelIndex];
         this.form = this.level.player.form;
-        const allDone = G.Levels.every((_, i) => G.Save.isCleared(i));
-        if (allDone) { this.scene = 'victory'; G.Audio.stopMusic(); }
+        if (!this.level.water) this.hasMount = !!this.level.player.mount;
+        // the Lava Citadel (final fortress) ends the story; secret levels are optional extras
+        if (this.levelIndex === FINAL_LEVEL) { this.scene = 'victory'; G.Audio.stopMusic(); }
         else this.goMap();
       }, f[0], f[1]);
     }
@@ -81,6 +87,7 @@
       this.go(() => {
         this.lives--;
         this.form = 'small';
+        this.hasMount = false;
         const st = G.Save.get(); st.lives = this.lives; G.Save.save();
         if (this.lives <= 0) { this.scene = 'gameover'; G.Audio.stopMusic(); }
         else this.startLevel(this.levelIndex);
@@ -115,22 +122,28 @@
             for (const e of this.titleLevel.enemies) e.update(this.titleLevel);
             this.titleLevel.enemies = this.titleLevel.enemies.filter((e) => !e.remove);
           }
+          if (In.justPressed('spin')) { this.openSettings(); break; }
           if (In.justPressed('jump') || In.justPressed('start')) {
             G.Audio.resume(); G.Audio.sfx.start();
             this.go(() => this.goMap());
           }
           break;
         case 'map':
+          if (In.justPressed('spin') && !this.worldMap.move) { this.openSettings(); break; }
           this.worldMap.update(STEP);
           break;
         case 'level':
           if (In.justPressed('start')) { this.paused = !this.paused; G.Audio.sfx.select(); }
+          if (this.paused && In.justPressed('spin')) { this.openSettings(); break; }
           if (!this.paused) this.level.update(STEP);
+          break;
+        case 'settings':
+          this.updateSettings();
           break;
         case 'gameover':
           if (In.justPressed('jump') || In.justPressed('start')) {
             this.go(() => {
-              this.lives = 5; this.coins = 0; this.score = 0; this.form = 'small'; this.checkpoints = {};
+              this.lives = 5; this.coins = 0; this.score = 0; this.form = 'small'; this.checkpoints = {}; this.hasMount = false;
               const st = G.Save.get(); st.lives = 5; st.coins = 0; G.Save.save();
               this.goMap();
             });
@@ -140,6 +153,56 @@
           if (In.justPressed('jump') || In.justPressed('start')) this.go(() => this.goMap());
           break;
       }
+    }
+
+    // Settings screen: returns to the scene it was opened from (a level stays paused).
+    openSettings() {
+      if (this.scene === 'settings' || this.trans) return;
+      if (this.scene === 'level') this.paused = true;
+      this.settingsReturn = this.scene;
+      this.scene = 'settings';
+      this.settingsRow = 0;
+      G.Audio.sfx.select();
+    }
+
+    updateSettings() {
+      const In = G.Input, items = G.Settings.ITEMS;
+      const item = items[this.settingsRow];
+      if (In.justPressed('up')) { this.settingsRow = (this.settingsRow + items.length - 1) % items.length; G.Audio.sfx.select(); }
+      else if (In.justPressed('down')) { this.settingsRow = (this.settingsRow + 1) % items.length; G.Audio.sfx.select(); }
+      else if (In.justPressed('left') && item.key !== 'back') { G.Settings.step(item, -1); G.Audio.sfx.coin(); }
+      else if (In.justPressed('right') && item.key !== 'back') { G.Settings.step(item, 1); G.Audio.sfx.coin(); }
+      else if (In.justPressed('jump')) {
+        if (item.key === 'back') this.closeSettings();
+        else { G.Settings.step(item, 1); G.Audio.sfx.coin(); }
+      } else if (In.justPressed('start') || In.justPressed('run') || In.justPressed('spin')) this.closeSettings();
+    }
+
+    closeSettings() {
+      this.scene = this.settingsReturn;
+      G.Audio.sfx.select();
+      if (this.scene === 'level' && !G.Audio.isMuted()) G.Audio.startMusic(G.Levels[this.levelIndex].theme);
+    }
+
+    renderSettings() {
+      const R = G.R, T = G.Text, S = G.Settings;
+      R.clear('#141a3a');
+      for (let y = 0; y < R.BASE_H; y += 6) R.rectS(0, y, R.BASE_W, 1, 'rgba(255,255,255,0.03)');
+      T.drawCenterShadow('AJUSTES', 14, '#ffe060', 3, '#000');
+      const st = S.get(), x0 = Math.max(16, Math.round(R.BASE_W / 2 - 170));
+      S.ITEMS.forEach((it, i) => {
+        const y = 52 + i * 26, sel = i === this.settingsRow;
+        R.rectS(x0, y - 6, R.BASE_W - x0 * 2, 20, sel ? 'rgba(90,120,255,0.45)' : 'rgba(255,255,255,0.06)');
+        if (sel) T.drawShadow('>', x0 + 4, y, '#ffe060', 1, '#000');
+        T.drawShadow(it.label, x0 + 14, y, sel ? '#ffffff' : '#c8ccee', 1, '#000');
+        if (it.values) {
+          T.drawShadow('< ' + it.names[st[it.key]] + ' >', x0 + 92, y, '#ffe060', 1, '#000');
+        } else if (it.range) {
+          for (let k = 0; k < it.range[1]; k++) R.rectS(x0 + 92 + k * 9, y, 7, 7, k < st[it.key] ? '#5ad08a' : 'rgba(255,255,255,0.18)');
+          T.drawShadow(String(st[it.key]), x0 + 92 + it.range[1] * 9 + 6, y, '#fff', 1, '#000');
+        }
+      });
+      T.drawCenterShadow('ARRIBA/ABAJO ELEGIR   IZQ/DER CAMBIAR   B VOLVER', 38, '#aab', 1, '#000');
     }
 
     render() {
@@ -156,18 +219,34 @@
         case 'level':
           if (G.R3 && G.R3.ok()) { R.clearTransparent(); G.R3.render(this.level); }
           else this.level.render();
+          if (this.level.water) this.renderWaterTint();
           G.HUD.render(this, this.level);
-          if (this.level.cleared) T.drawCenterShadow('LEVEL CLEAR!', 80, '#ffe000', 2, '#000');
+          if (this.level.cleared) {
+            if (this.level.secretExit) T.drawCenterShadow('SALIDA SECRETA!', 80, '#d8a8ff', 2, '#000');
+            else T.drawCenterShadow('LEVEL CLEAR!', 80, '#ffe000', 2, '#000');
+          }
           if (this.paused) {
             R.rectS(0, 0, R.BASE_W, R.BASE_H, 'rgba(0,0,0,0.55)');
-            T.drawCenterShadow('PAUSED', 90, '#fff', 3, '#000');
-            T.drawCenterShadow('PRESS START TO RESUME', 130, '#fff', 1, '#000');
+            T.drawCenterShadow('PAUSA', 86, '#fff', 3, '#000');
+            T.drawCenterShadow('START: CONTINUAR    Y: AJUSTES', 126, '#fff', 1, '#000');
           }
           break;
         case 'gameover': this.renderGameOver(); break;
         case 'victory': this.renderVictory(); break;
+        case 'settings': this.renderSettings(); break;
       }
       if (this.trans) this.renderIris();
+    }
+
+    // Underwater look over either renderer: blue tint plus a rippling surface line.
+    renderWaterTint() {
+      const R = G.R, ctx = R.getCtx();
+      R.rectS(0, 0, R.BASE_W, R.BASE_H, 'rgba(30,110,220,0.14)');
+      const sy = -R.cam.y + 6;
+      if (sy > -8) {
+        ctx.fillStyle = 'rgba(200,240,255,0.55)';
+        for (let x = 0; x < R.BASE_W; x += 2) ctx.fillRect(x, Math.round(sy + Math.sin((x + this.animFrame * 1.5) * 0.06) * 2), 2, 1);
+      }
     }
 
     renderIris() {
@@ -215,7 +294,7 @@
       const R = G.R, T = G.Text;
       T.drawCenterShadow('PIP QUEST', 26, '#ffffff', 5, '#177a74');
       T.drawCenterShadow('UNA AVENTURA EN 3D', 70, '#fff6c0', 1, '#000');
-      if ((this.animFrame >> 5) & 1) T.drawCenterShadow('PULSA A PARA EMPEZAR', 88, '#fff', 1, '#000');
+      if ((this.animFrame >> 5) & 1) T.drawCenterShadow('PULSA A PARA EMPEZAR    Y: AJUSTES', 88, '#fff', 1, '#000');
       const help = [
         'A SALTAR    B CORRER / FUEGO / AGARRAR    Y GIRO',
         'ABAJO EN EL AIRE: GOLPE AL SUELO',
@@ -275,6 +354,10 @@
     document.addEventListener('touchmove', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
     ['gesturestart', 'gesturechange', 'gestureend', 'dblclick'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
     G.game = new Game();
+    G.Settings.apply();
+
+    const gear = document.getElementById('gear');
+    if (gear) gear.addEventListener('click', () => { G.Audio.resume(); G.game.openSettings(); });
 
     const muteBtn = document.getElementById('mute');
     if (muteBtn) {

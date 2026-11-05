@@ -40,6 +40,7 @@
   }
 
   function fireKill(e, level, pts) {
+    level.particles.push(new G.StarBurst(e.x + e.w / 2, e.y + e.h / 2, '#ffb84a'));
     launch(e);
     level.game.addScore(pts);
     level.addScore(e.x, e.y, pts);
@@ -78,7 +79,11 @@
       const S = G.Sprites;
       if (this.fly) { G.R.sprite(S.blob[0], this.x - 1, this.y - 1, false, true); return; }
       if (this.dying) { G.R.spriteScaled(S.blob[0], this.x - 1, this.y + this.h - 6, 18, 7); return; }
-      G.R.sprite(S.blob[Math.floor(this.animTimer / 10) % 2], this.x - 1, this.y - 1);
+      // waddle: squash & stretch in step with the walk cycle
+      const img = S.blob[Math.floor(this.animTimer / 10) % 2];
+      const k = Math.sin(this.animTimer * 0.31) * 0.07;
+      const w2 = img.width * (1 + k), h2 = img.height * (1 - k);
+      G.R.spriteXf(img, this.x + this.w / 2 - w2 / 2, this.y - 1 + img.height - h2, w2, h2);
     }
   }
 
@@ -170,7 +175,7 @@
           G.Audio.sfx.stomp();
         } else level.hurtPlayer();
       } else if (this.mode === 'shell') {
-        if (G.Input.down('run') && !player.carry && player.state === 'play' && !player.pound) {
+        if (G.Input.down('run') && !player.carry && !player.mount && player.state === 'play' && !player.pound) {
           this.mode = 'carried';
           this.carried = true;
           player.carry = this;
@@ -241,16 +246,17 @@
       this.baseX = x; this.baseY = y + 2;
       this.vx = 0; this.vy = 0;
       this.t = Math.random() * 100;
+      this.t0 = this.t; // oscillations are measured from the spawn point, so nothing jumps on frame 1
       this.alive = true; this.dying = false; this.remove = false; this.fly = false;
       this.facing = -1;
     }
     update(level) {
       if (this.fly) { flyUpdate(this, level); return; }
       this.t++;
-      const nx = this.baseX + Math.sin(this.t * 0.015) * 40;
+      const nx = this.baseX + (Math.sin(this.t * 0.015) - Math.sin(this.t0 * 0.015)) * 40;
       this.facing = nx < this.x ? -1 : 1;
       this.x = nx;
-      this.y = this.baseY + Math.sin(this.t * 0.09) * 6;
+      this.y = this.baseY + (Math.sin(this.t * 0.09) - Math.sin(this.t0 * 0.09)) * 6;
     }
     onPlayer(player, level) {
       if (isStomp(player, this)) {
@@ -312,7 +318,13 @@
     render() {
       const S = G.Sprites;
       if (this.dying) { G.R.spriteScaled(S.hopper[0], this.x - 1, this.y + this.h - 6, 18, 7); return; }
-      G.R.sprite(S.hopper[this.grounded ? 0 : 1], this.x - 1, this.y - 1, this.facing > 0, this.fly);
+      // crouch before the leap, stretch in the air
+      const img = S.hopper[this.grounded ? 0 : 1];
+      let sx = 1, sy = 1;
+      if (!this.grounded && !this.fly) { sx = 0.88; sy = 1.14; }
+      else if (this.grounded && this.timer < 12) { sx = 1.15; sy = 0.84; }
+      const w2 = img.width * sx, h2 = img.height * sy;
+      G.R.spriteXf(img, this.x + this.w / 2 - w2 / 2, this.y - 1 + img.height - h2, w2, h2, this.facing > 0, this.fly);
     }
   }
 
@@ -359,6 +371,7 @@
       if (col.left || col.right) this.vx = -this.vx;
       if (this.x < level.arenaX + 16) { this.x = level.arenaX + 16; this.vx = Math.abs(this.vx); }
       if (this.grounded && !wasGrounded) {
+        this.squashT = 14;
         level.shake = 12;
         G.Audio.sfx.pound();
         if (++this.lands % 2 === 0 && level.enemies.length < 4) {
@@ -399,10 +412,73 @@
       const S = G.Sprites;
       if (this.invuln > 0 && (this.invuln & 4)) return;
       const img = S.boss[this.grounded ? 0 : 1];
-      G.R.sprite(img, this.x - 2, this.y + this.h - img.height + 1, this.facing > 0, this.fly);
+      let sx = 1, sy = 1;
+      if (this.squashT > 0) { this.squashT--; const k = this.squashT / 14; sx = 1 + 0.22 * k; sy = 1 - 0.2 * k; }
+      else if (!this.grounded && !this.fly) { sx = 0.92; sy = 1.08; }
+      const w2 = img.width * sx, h2 = img.height * sy;
+      G.R.spriteXf(img, this.x + this.w / 2 - w2 / 2, this.y + this.h + 1 - h2, w2, h2, this.facing > 0, this.fly);
     }
   }
 
+  // Fish: patrols back and forth with a gentle bob. Underwater enemies can't be stomped.
+  class Fish {
+    constructor(x, y) {
+      this.w = 14; this.h = 10;
+      this.x = x + 1; this.y = y + 3;
+      this.baseX = this.x; this.baseY = this.y;
+      this.vx = 0; this.vy = 0;
+      this.t = Math.random() * 200;
+      this.t0 = this.t;
+      this.alive = true; this.dying = false; this.remove = false; this.fly = false;
+      this.facing = -1;
+      this.swimmer = true;
+    }
+    update(level) {
+      if (this.fly) { flyUpdate(this, level); return; }
+      this.t++;
+      const nx = this.baseX + (Math.sin(this.t * 0.012) - Math.sin(this.t0 * 0.012)) * 56;
+      this.facing = nx < this.x ? -1 : 1;
+      this.x = nx;
+      this.y = this.baseY + (Math.sin(this.t * 0.07) - Math.sin(this.t0 * 0.07)) * 4;
+    }
+    onPlayer(player, level) { level.hurtPlayer(); }
+    hitByFire(level) { fireKill(this, level, 200); }
+    render() {
+      const S = G.Sprites;
+      G.R.sprite(S.fish[(this.t >> 3) & 1], this.x - 1, this.y - 1, this.facing > 0, this.fly);
+    }
+  }
+
+  // Jelly: drifts up and down in a column, pulsing.
+  class Jelly {
+    constructor(x, y) {
+      this.w = 12; this.h = 14;
+      this.x = x + 2; this.y = y;
+      this.baseY = y;
+      this.vx = 0; this.vy = 0;
+      this.t = Math.random() * 200;
+      this.t0 = this.t;
+      this.alive = true; this.dying = false; this.remove = false; this.fly = false;
+      this.swimmer = true;
+    }
+    update(level) {
+      if (this.fly) { flyUpdate(this, level); return; }
+      this.t++;
+      this.y = this.baseY + (Math.sin(this.t * 0.025) - Math.sin(this.t0 * 0.025)) * 28;
+    }
+    onPlayer(player, level) { level.hurtPlayer(); }
+    hitByFire(level) { fireKill(this, level, 200); }
+    render() {
+      const S = G.Sprites;
+      const img = S.jelly[(this.t >> 4) & 1];
+      const k = Math.sin(this.t * 0.2) * 0.08;
+      const w2 = img.width * (1 + k), h2 = img.height * (1 - k);
+      G.R.spriteXf(img, this.x + this.w / 2 - w2 / 2, this.y - 1 + img.height - h2, w2, h2, false, this.fly);
+    }
+  }
+
+  G.Fish = Fish;
+  G.Jelly = Jelly;
   G.Blob = Blob;
   G.Snail = Snail;
   G.Spiky = Spiky;

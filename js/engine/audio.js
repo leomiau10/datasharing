@@ -3,7 +3,8 @@
 (function (G) {
   'use strict';
 
-  let ctx = null, masterGain = null, musicGain = null;
+  let ctx = null, masterGain = null, musicGain = null, sfxGain = null;
+  let musicVol = 7, sfxVol = 8;
   let muted = false;
   let timer = null;
   let nextTime = 0, step = 0, song = null;
@@ -17,8 +18,10 @@
     masterGain.gain.value = muted ? 0 : 0.5;
     masterGain.connect(ctx.destination);
     musicGain = ctx.createGain();
-    musicGain.gain.value = 0.2;
     musicGain.connect(masterGain);
+    sfxGain = ctx.createGain();
+    sfxGain.connect(masterGain);
+    applyVolumes();
   }
 
   function resume() {
@@ -37,7 +40,7 @@
     g.gain.linearRampToValueAtTime(gain == null ? 0.3 : gain, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g);
-    g.connect(dest || masterGain);
+    g.connect(dest || sfxGain);
     o.start(t);
     o.stop(t + dur + 0.02);
   }
@@ -52,7 +55,7 @@
     o.frequency.exponentialRampToValueAtTime(f2, t + dur);
     g.gain.setValueAtTime(gain == null ? 0.3 : gain, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(masterGain);
+    o.connect(g); g.connect(sfxGain);
     o.start(t); o.stop(t + dur + 0.02);
   }
 
@@ -70,6 +73,7 @@
     flag() { [262, 330, 392, 523, 659, 784].forEach(function (f, i) { later(function () { note(f, 0.14, 'square', 0.24); }, i * 110); }); },
     select() { note(660, 0.06, 'square', 0.18); },
     spin() { slide(300, 1200, 0.12, 'triangle', 0.2); later(function () { slide(500, 1400, 0.1, 'triangle', 0.14); }, 90); },
+    swim() { slide(300, 520, 0.09, 'triangle', 0.14); },
     pound() { slide(180, 50, 0.22, 'square', 0.34); },
     medal() { [784, 988, 1175, 1568].forEach(function (f, i) { later(function () { note(f, 0.12, 'triangle', 0.26); }, i * 60); }); },
     oneup() { [659, 784, 1319, 1047, 1175, 1568].forEach(function (f, i) { later(function () { note(f, 0.1, 'square', 0.2); }, i * 80); }); },
@@ -96,6 +100,7 @@
     desert: { tempo: 0.13, root: 57, scale: [0, 1, 4, 5, 7, 8, 10], prog: [0, 1, 0, 5], lead: 'square', seed: 41 },
     snow: { tempo: 0.15, root: 69, scale: MAJOR, prog: [0, 3, 5, 4], lead: 'triangle', seed: 43 },
     volcano: { tempo: 0.11, root: 52, scale: MINOR, prog: [0, 6, 5, 4], lead: 'sawtooth', seed: 47 },
+    water: { tempo: 0.18, root: 60, scale: MAJOR, prog: [0, 5, 3, 4], lead: 'triangle', seed: 59 },
     night: { tempo: 0.17, root: 59, scale: MINOR, prog: [0, 3, 0, 4], lead: 'triangle', seed: 53 },
     star: { tempo: 0.085, root: 67, scale: MAJOR, prog: [0, 4, 0, 4], lead: 'square', seed: 29 },
     boss: { tempo: 0.11, root: 50, scale: MINOR, prog: [0, 1, 0, 6], lead: 'sawtooth', seed: 31 }
@@ -170,6 +175,14 @@
     if (timer) { clearInterval(timer); timer = null; }
   }
 
+  // Settings sliders run 0..10; 7 for music matches the original mix level.
+  function applyVolumes() {
+    if (!ctx) return;
+    musicGain.gain.value = 0.03 * musicVol;
+    sfxGain.gain.value = sfxVol / 8;
+  }
+  function setVolumes(m, s) { musicVol = m; sfxVol = s; applyVolumes(); }
+
   function toggleMute() {
     muted = !muted;
     if (muted) { stopMusic(); if (masterGain) masterGain.gain.value = 0; }
@@ -177,5 +190,5 @@
     return muted;
   }
 
-  G.Audio = { resume: resume, sfx: sfx, startMusic: startMusic, stopMusic: stopMusic, toggleMute: toggleMute, isMuted: function () { return muted; } };
+  G.Audio = { resume: resume, sfx: sfx, startMusic: startMusic, stopMusic: stopMusic, toggleMute: toggleMute, setVolumes: setVolumes, isMuted: function () { return muted; } };
 })(window.GAME = window.GAME || {});

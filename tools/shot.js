@@ -52,6 +52,35 @@ const out = process.argv[2] || 'tools';
     await page.waitForTimeout(900);
     await page.screenshot({ path: out + '/shot-' + sc.name + '.png' });
   }
+  // New features: underwater level, riding Rolo, settings screen, revealed secret path, secret world
+  await page.evaluate(() => {
+    const g = window.GAME.game; g.trans = null; g.hasMount = false;
+    g.startLevel(21);
+    const L = g.level; L.player.x = 18 * 16; L.player.y = 120; L.updateCamera(true);
+  });
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: out + '/shot-water.png' });
+  await page.evaluate(() => {
+    const g = window.GAME.game; g.trans = null; g.hasMount = true;
+    g.startLevel(3);
+    const L = g.level; L.player.x += 120; L.updateCamera(true);
+  });
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: out + '/shot-mount.png' });
+  await page.evaluate(() => { const g = window.GAME.game; g.hasMount = false; g.trans = null; g.scene = 'map'; g.openSettings(); });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: out + '/shot-settings.png' });
+  await page.evaluate(() => {
+    const G = window.GAME, g = G.game; g.trans = null;
+    G.Save.markSecret(2); G.Save.markCleared(2); G.Save.markCleared(21);
+    G.Save.setWorld(0, 2); g.goMap();
+  });
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: out + '/shot-map-secret.png' });
+  await page.evaluate(() => { const G = window.GAME, g = G.game; g.trans = null; G.Save.setWorld(4, 1); g.goMap(); });
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: out + '/shot-map-star.png' });
+
   console.log(errors.length ? errors.join('\n') : 'NO CONSOLE/PAGE ERRORS');
   await browser.close();
 })().catch((e) => { console.error('SHOT FAILED:', e.message); process.exit(1); });

@@ -138,6 +138,46 @@
     }
   }
 
+  // Secret exit flag: touching it clears the level through the hidden exit.
+  class SecretFlag {
+    constructor(x, y) { this.x = x; this.y = y + 16 - 42; this.w = 12; this.h = 42; this.t = 0; this.remove = false; }
+    update(level) {
+      this.t++;
+      if (!level.cleared && G.Physics.aabb(level.player, this)) level.clearLevel(true);
+      if ((this.t & 15) === 0) level.particles.push(new G.Sparkle(this.x + 10, this.y + 8));
+    }
+    render() { G.R.sprite(G.Sprites.secretFlag, this.x - 1, this.y - 1); }
+  }
+
+  // Rising air bubble (underwater); vx lets currents carry it.
+  class Bubble {
+    constructor(x, y, vx) { this.x = x; this.y = y; this.vx = vx || 0; this.life = 70 + Math.floor(Math.random() * 40); this.t = Math.random() * 6; this.remove = false; }
+    update() {
+      this.t += 0.15;
+      this.y -= 0.6;
+      this.x += this.vx + Math.sin(this.t) * 0.3;
+      if (--this.life <= 0 || this.y < 4) this.remove = true;
+    }
+    render() {
+      G.R.rect(this.x, this.y, 3, 3, 'rgba(220,245,255,0.75)');
+      G.R.rect(this.x, this.y, 1, 1, '#ffffff');
+    }
+  }
+
+  // Burst of little stars when an enemy is defeated.
+  class StarBurst {
+    constructor(x, y, color) { this.x = x; this.y = y; this.life = 16; this.color = color || '#fff6a0'; this.remove = false; }
+    update() { if (--this.life <= 0) this.remove = true; }
+    render() {
+      const d = (16 - this.life) * 1.4;
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        const s = this.life > 6 ? 3 : 2;
+        G.R.rect(this.x + Math.cos(a) * d - s / 2, this.y + Math.sin(a) * d - s / 2, s, s, i % 2 ? '#ffffff' : this.color);
+      }
+    }
+  }
+
   class FloatText {
     constructor(x, y, text) { this.x = x; this.y = y; this.text = text; this.life = 40; this.remove = false; }
     update() { this.y -= 0.6; if (--this.life <= 0) this.remove = true; }
@@ -262,4 +302,7 @@
   G.Puff = Puff;
   G.Sparkle = Sparkle;
   G.FloatText = FloatText;
+  G.Bubble = Bubble;
+  G.SecretFlag = SecretFlag;
+  G.StarBurst = StarBurst;
 })(window.GAME = window.GAME || {});

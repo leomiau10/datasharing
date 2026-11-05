@@ -257,6 +257,8 @@
       outline: '#203a60', brick: '#a8c8e8', brickDk: '#5878a8', brickHi: '#e0f0ff', seed: 71 },
     volcano: { grass: '#6a3a32', grassHi: '#a0503a', grassDk: '#3a2020', soil: '#3a2424', soilDk: '#241414', soilHi: '#5a3434',
       outline: '#100606', brick: '#7a3a2a', brickDk: '#3a1410', brickHi: '#b05a3a', seed: 79 },
+    water: { grass: '#f0d8a0', grassHi: '#fff0c8', grassDk: '#c8a870', soil: '#c88a6a', soilDk: '#9a5a4a', soilHi: '#e8aa8a',
+      outline: '#3a1a20', brick: '#f08aa0', brickDk: '#b04a68', brickHi: '#ffc0d0', seed: 89 },
     night: { grass: '#4a8a6a', grassHi: '#7ab89a', grassDk: '#2a5a4a', soil: '#3a3050', soilDk: '#241c38', soilHi: '#504470',
       outline: '#0c0818', brick: '#5a4a7a', brickDk: '#2a2040', brickHi: '#8a7ab0', seed: 83 },
     castle: { grass: '#8a8a98', grassHi: '#bcbcc8', grassDk: '#5a5a68', soil: '#6a6a78', soilDk: '#42424e', soilHi: '#8c8c9a',
@@ -763,6 +765,98 @@
     }
     return outline(c, '#0e2a24');
   }
+  // Rolo: armored rhino beetle the hero can ride (original design).
+  function makeBeetle(frame, wings, ram) {
+    const c = mk(25, 18), x = c.getContext('2d');
+    x.fillStyle = '#1a1a30';
+    const lo = frame ? 1 : 0;
+    [[5 + lo, 14], [11 - lo, 14], [16 + lo, 14]].forEach(function (p) { x.fillRect(p[0], p[1], 2, 4); });
+    ellipse(x, 10, 9, 9, 6, '#2a3ac0');
+    ellipse(x, 9, 8, 7, 4, '#3a52e0');
+    ellipse(x, 7, 6, 3, 2, '#8aa0ff');
+    x.fillStyle = '#1a2480'; x.fillRect(10, 4, 1, 10);
+    x.fillStyle = '#c84a3a'; x.fillRect(6, 2, 8, 2);
+    x.fillStyle = '#f07a5a'; x.fillRect(6, 2, 8, 1);
+    disc(x, 19, 10, 3, '#22224a');
+    x.fillStyle = '#ffd84a';
+    if (ram) { x.fillRect(21, 8, 4, 2); x.fillRect(23, 7, 2, 1); }
+    else { x.fillRect(20, 5, 2, 4); x.fillRect(21, 3, 2, 3); }
+    x.fillStyle = '#ffffff'; x.fillRect(19, 9, 2, 2);
+    x.fillStyle = '#101010'; x.fillRect(20, 10, 1, 1);
+    if (wings) { ellipse(x, 6, 4, 5, 3, '#e6f5ff'); ellipse(x, 12, 3, 4, 2, '#cfe8ff'); }
+    return outline(c, OL);
+  }
+  // Underwater cast (original designs)
+  function makeFish(frame) {
+    const c = mk(16, 12), x = c.getContext('2d');
+    ellipse(x, 7, 6, 6, 4, '#ff8a3a');
+    ellipse(x, 6, 5, 4, 2, '#ffc070');
+    x.fillStyle = '#ff8a3a';
+    const t = frame ? 1 : 0;
+    x.fillRect(12, 3 + t, 3, 2); x.fillRect(13, 5, 3, 2); x.fillRect(12, 7 - t, 3, 2);
+    x.fillStyle = '#e85a2a'; x.fillRect(5, 1, 4, 2); x.fillRect(6, 9, 3, 2);
+    x.fillStyle = '#ffffff'; x.fillRect(3, 4, 3, 3);
+    x.fillStyle = '#101020'; x.fillRect(3, 5, 2, 2);
+    x.fillStyle = '#c8402a'; x.fillRect(1, 7, 2, 1);
+    return outline(c, OL);
+  }
+  function makeJelly(frame) {
+    const c = mk(14, 16), x = c.getContext('2d');
+    ellipse(x, 7, 5, 6, 5, '#ff7ad0');
+    ellipse(x, 6, 4, 4, 3, '#ffb0e8');
+    x.fillStyle = '#ffffff'; x.fillRect(4, 3, 2, 2);
+    x.fillStyle = '#d84aa8'; x.fillRect(1, 8, 12, 2);
+    for (let i = 0; i < 4; i++) {
+      const sx = 2 + i * 3, off = (i + frame) % 2;
+      x.fillStyle = '#ff9ad8';
+      x.fillRect(sx + off, 10, 1, 2); x.fillRect(sx + 1 - off, 12, 1, 2); x.fillRect(sx + off, 14, 1, 2);
+    }
+    x.fillStyle = '#3a1030'; x.fillRect(4, 6, 1, 2); x.fillRect(9, 6, 1, 2);
+    return outline(c, '#5a1048');
+  }
+  function makeKelp() {
+    const c = mk(10, 34), x = c.getContext('2d');
+    for (let j = 0; j < 34; j++) {
+      const dx = Math.round(Math.sin(j * 0.35) * 2);
+      x.fillStyle = '#2a9a5a'; x.fillRect(4 + dx, j, 3, 1);
+      x.fillStyle = '#5ad08a'; x.fillRect(4 + dx, j, 1, 1);
+      if (j % 7 === 3) { x.fillStyle = '#2a9a5a'; x.fillRect(dx > 0 ? 7 + dx : 1 + dx, j, 3, 2); }
+    }
+    return outline(c, '#0e3a24');
+  }
+  function makeCoral() {
+    const c = mk(16, 16), x = c.getContext('2d');
+    x.fillStyle = '#ff6a8a';
+    x.fillRect(7, 5, 3, 11); x.fillRect(3, 8, 2, 8); x.fillRect(11, 7, 2, 9); x.fillRect(3, 12, 10, 2);
+    x.fillRect(1, 5, 2, 4); x.fillRect(13, 3, 2, 5); x.fillRect(7, 1, 2, 5);
+    x.fillStyle = '#ffb0c0'; x.fillRect(7, 1, 1, 14); x.fillRect(13, 3, 1, 4);
+    return outline(c, '#5a1028');
+  }
+  // Secret exit: a purple star pennant (the hidden second goal).
+  function makeSecretFlag() {
+    const c = mk(16, 42), x = c.getContext('2d');
+    x.fillStyle = '#d8dce8'; x.fillRect(3, 4, 2, 38);
+    x.fillStyle = '#7a8098'; x.fillRect(4, 4, 1, 38);
+    disc(x, 4, 3, 2, '#ffd84a');
+    for (let j = 0; j < 11; j++) {
+      const w = Math.round(11 * (1 - Math.abs(j - 5) / 6));
+      x.fillStyle = '#8a4ad8'; x.fillRect(5, 5 + j, w, 1);
+    }
+    x.fillStyle = '#b88aff'; x.fillRect(5, 5, 6, 1);
+    x.fillStyle = '#ffffff'; x.fillRect(8, 9, 1, 3); x.fillRect(7, 10, 3, 1);
+    return outline(c, OL);
+  }
+  const secretFlag = makeSecretFlag();
+
+  const fish = [makeFish(0), makeFish(1)];
+  const jelly = [makeJelly(0), makeJelly(1)];
+  const kelp = makeKelp();
+  const coral = makeCoral();
+
+  const beetle = [makeBeetle(0), makeBeetle(1)];
+  const beetleWings = makeBeetle(0, true);
+  const beetleRam = makeBeetle(1, false, true);
+
   const cactus = makeCactus();
   const snowPine = makeSnowPine();
 
@@ -794,7 +888,9 @@
     cloud: cloud, bush: bush, hill: hill,
     spiky: spiky, bee: bee, hopper: hopper, boss: boss, heart: heart, cloudItem: cloudItem, gem: gem,
     medal: medal, medalFaded: medalFaded, lift: lift, sign: sign, flowerDecor: flowerDecor, tree: tree,
-    crystal: crystal, mapCastle: mapCastle, cactus: cactus, snowPine: snowPine
+    crystal: crystal, mapCastle: mapCastle, cactus: cactus, snowPine: snowPine,
+    beetle: beetle, beetleWings: beetleWings, beetleRam: beetleRam,
+    fish: fish, jelly: jelly, kelp: kelp, coral: coral, secretFlag: secretFlag
   };
   // Convenience aliases for the title/map screens.
   S.tGround = tilesets.overworld.groundM;

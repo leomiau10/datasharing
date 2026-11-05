@@ -123,6 +123,34 @@
     return c;
   }
 
+  // Slanted light shafts from the surface.
+  function rays(h, seed) {
+    const c = G.Gfx.mk(PERIOD, h), x = c.getContext('2d');
+    const rnd = G.Gfx.rng(seed);
+    for (let n = 0; n < 7; n++) {
+      const x0 = rnd() * PERIOD, w = 10 + rnd() * 18;
+      x.fillStyle = 'rgba(200,240,255,' + (0.06 + rnd() * 0.06).toFixed(2) + ')';
+      for (let j = 0; j < h; j++) x.fillRect(Math.round(x0 + j * 0.35) % PERIOD, j, Math.round(w * (1 - j / h * 0.6)), 1);
+    }
+    return c;
+  }
+
+  // Swaying seaweed silhouettes along the sea floor.
+  function kelpBed(h, color, hi, seed) {
+    const c = G.Gfx.mk(PERIOD, h), x = c.getContext('2d');
+    const rnd = G.Gfx.rng(seed);
+    for (let n = 0; n < 40; n++) {
+      const bx = Math.floor(rnd() * PERIOD), th = 20 + Math.floor(rnd() * (h - 24)), ph = rnd() * 6;
+      for (let j = 0; j < th; j++) {
+        const px = bx + Math.round(Math.sin(j * 0.18 + ph) * 3);
+        x.fillStyle = color; x.fillRect(px, h - j, 3, 1);
+        x.fillStyle = hi; x.fillRect(px, h - j, 1, 1);
+      }
+    }
+    x.fillStyle = color; x.fillRect(0, h - 6, PERIOD, 6);
+    return c;
+  }
+
   function sun(r, color, edge) {
     const c = G.Gfx.mk(r * 2 + 2, r * 2 + 2), x = c.getContext('2d');
     G.Gfx.disc(x, r + 1, r + 1, r, edge);
@@ -160,6 +188,16 @@
             { img: clouds(90, 4, 21, '#ffb0a0', '#c05a7a'), scroll: 0.1, y: 20 },
             { img: hills(120, 70, 36, [2, 5, 9], '#7a3a80', '#a85a9a', 31), scroll: 0.2, y: H - 120 },
             { img: hills(90, 50, 26, [3, 6, 11], '#4a2468', '#6a3a8c', 33), scroll: 0.4, y: H - 90 }
+          ]
+        };
+      case 'water':
+        return {
+          sky: gradient(['#2a8ad8', '#1a5aa8', '#0e3478', '#081a48']),
+          layers: [
+            { img: rays(H, 99), scroll: 0.05, y: 0 },
+            { img: sparkles(H, 70, 97, ['#8ad0ff', '#c8f0ff', '#ffffff']), scroll: 0.15, y: 0 },
+            { img: kelpBed(110, '#0e4a6a', '#1a6a8a', 101), scroll: 0.25, y: H - 110 },
+            { img: kelpBed(80, '#0a3a4a', '#155a6a', 103), scroll: 0.45, y: H - 80 }
           ]
         };
       case 'forest':

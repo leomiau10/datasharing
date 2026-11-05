@@ -175,3 +175,9 @@ html, body {
   #controls, .centerbtn { opacity: 0.25; }
   #controls:hover, .centerbtn:hover { opacity: 1; }
 }
+
+/* Settings button sits left of the mute button */
+.sysbtn.gear {
+  right: calc(56px + env(safe-area-inset-right));
+  font-size: 20px;
+}
