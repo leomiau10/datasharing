@@ -5,7 +5,7 @@
   const STEP = 1 / 60;
   const IRIS_FRAMES = 28;
   const FINAL_LEVEL = 20;
-  G.VERSION = '10'; // shown on the title screen; matches the service worker cache name
+  G.VERSION = '11'; // shown on the title screen; matches the service worker cache name
 
   class Game {
     constructor() {

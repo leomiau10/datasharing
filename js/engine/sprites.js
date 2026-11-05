@@ -33,6 +33,7 @@
     const ox = out.getContext('2d');
     [[0, 1], [2, 1], [1, 0], [1, 2]].forEach(function (d) { ox.drawImage(sil, d[0], d[1]); });
     ox.drawImage(src, 1, 1);
+    out._src = src; // un-outlined art (offset 1px): the 3D models use it so they get no dark shell
     return out;
   }
 
@@ -611,6 +612,7 @@
       x.globalAlpha = 0.55;
       x.fillStyle = color;
       x.fillRect(0, 0, img.width, img.height);
+      if (img._src) c._src = tint(img._src, color);
       tintCache.set(key, c);
     }
     return c;

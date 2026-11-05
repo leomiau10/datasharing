@@ -157,8 +157,11 @@
   function voxelGeometry(img) {
     let geo = geoCache.get(img);
     if (geo) return geo;
-    const w = img.width, h = img.height;
-    const data = img.getContext('2d').getImageData(0, 0, w, h).data;
+    // Extrude the art without its 2D outline: in 3D that dark border turns into a black shell.
+    const src = img._src || img;
+    const off = img._src ? 1 : 0; // outlined canvases are 1px larger on each side
+    const w = src.width, h = src.height;
+    const data = src.getContext('2d').getImageData(0, 0, w, h).data;
     const solid = (i, j) => i >= 0 && j >= 0 && i < w && j < h && data[(j * w + i) * 4 + 3] > 128;
     const zf = depthFor(img) * PX / 2;
     const pos = [], nrm = [], col = [], idx = [];
@@ -174,7 +177,7 @@
         const o = (j * w + i) * 4;
         c.setRGB(data[o] / 255, data[o + 1] / 255, data[o + 2] / 255, THREE.SRGBColorSpace);
         const r = c.r, g = c.g, b = c.b;
-        const x0 = i * PX, x1 = (i + 1) * PX, y0 = -j * PX, y1 = -(j + 1) * PX;
+        const x0 = (i + off) * PX, x1 = (i + off + 1) * PX, y0 = -(j + off) * PX, y1 = -(j + off + 1) * PX;
         quad([x0, y1, zf, x1, y1, zf, x1, y0, zf, x0, y0, zf], [0, 0, 1], r, g, b);
         quad([x1, y1, -zf, x0, y1, -zf, x0, y0, -zf, x1, y0, -zf], [0, 0, -1], r * 0.8, g * 0.8, b * 0.8);
         const s = 0.88;

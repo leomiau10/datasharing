@@ -1,6 +1,6 @@
 // Service worker: network-first (so updates reach the phone), cache fallback for offline play.
 // Keep CACHE in sync with G.VERSION in js/main.js.
-const CACHE = 'pip-quest-v10';
+const CACHE = 'pip-quest-v11';
 const ASSETS = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './vendor/three.module.min.js',
